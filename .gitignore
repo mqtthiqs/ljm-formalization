@@ -1,0 +1,17 @@
+*.vo.aux
+*.vo
+*.vio
+*.v.d
+*.glob
+Metalib/html/
+Stlc/html
+Metalib/CoqSrc.mk
+Stlc/extra/stlc-rules.tex
+*.aux
+*.fls
+*.fdb_latexmk
+*.log
+/CAL/.depend-stamp
+/CAL/DSSSMakefile
+Makefile.bak
+*~
