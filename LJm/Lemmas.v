@@ -232,27 +232,27 @@ Proof.
 Admitted.
 *)
 
-Print typing_mutind.
+(* Print typing_mutind. *)
 
-Check (typingT_ind_4
-         (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))) .
+(* Check (typingT_ind_4 *)
+(*          (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))) . *)
 
-Check (typingA_ind_4
-         (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))
-         (fun G T a' D (H: typingA G T a' D) => (forall C1 C2 a, typingA G T a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G T (app_args_args a' a) D) )).
+(* Check (typingA_ind_4 *)
+(*          (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C)) *)
+(*          (fun G T a' D (H: typingA G T a' D) => (forall C1 C2 a, typingA G T a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G T (app_args_args a' a) D) )). *)
 
-Check (typingA_ind_4
-         (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))
-         (fun G T a' D (H: typingA G T a' D) => (forall C1 C2 a, typingA G T a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G T (app_args_args a' a) D) ))
-      (fun G T l D (H: typingL G T l D) => True )
-.
+(* Check (typingA_ind_4 *)
+(*          (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C)) *)
+(*          (fun G T a' D (H: typingA G T a' D) => (forall C1 C2 a, typingA G T a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G T (app_args_args a' a) D) )) *)
+(*       (fun G T l D (H: typingL G T l D) => True ) *)
+(* . *)
 
-Check (typingA_ind_4
-         (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))
-         (fun G A a' D (H: typingA G A a' D) => (forall C1 C2 a, typingA G A a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G A (app_args_args a' a) D) ))
-      (fun G A l D (H: typingL G A l D) => True )
-      (fun G A c C (H: typingC G A c C) => (forall B1 B2 a, typingC G A c (typ_arrow B1 B2) ->
-                     typingA G (typ_arrow B1 B2) a C -> typingC G A (app_cont_args c a) C) ).
+(* Check (typingA_ind_4 *)
+(*          (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C)) *)
+(*          (fun G A a' D (H: typingA G A a' D) => (forall C1 C2 a, typingA G A a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G A (app_args_args a' a) D) )) *)
+(*       (fun G A l D (H: typingL G A l D) => True ) *)
+(*       (fun G A c C (H: typingC G A c C) => (forall B1 B2 a, typingC G A c (typ_arrow B1 B2) -> *)
+(*                      typingA G (typ_arrow B1 B2) a C -> typingC G A (app_cont_args c a) C) ). *)
 
 
 
@@ -265,13 +265,13 @@ Lemma typingApps : (forall G A B C1 C2 D a' a, typingA G (typ_arrow A B) a' (typ
 (forall G A B C D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->
          typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C).
 Proof.
-  Print typing_mutind.
-  apply (typing_mutind
-         (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C))
-         (fun G A a' D (H: typingA G A a' D) => (forall C1 C2 a, typingA G A a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G A (app_args_args a' a) D) )
-         (fun G A l D (H: typingL G A l D) => True )
-         (fun G A c C (H: typingC G A c C) => (forall B1 B2 a, typingC G A c (typ_arrow B1 B2) ->
-            typingA G (typ_arrow B1 B2) a C -> typingC G A (app_cont_args c a) C)) ).
+  Check typing_mutind.
+  (* apply (typing_mutind *)
+  (*        (fun G v C (H: typingT G v C) => (forall A B D x v a, typingT ([(x,D)] ++ G) v (typ_arrow A B) ->  typingA G (typ_arrow A B) a C -> typingT ([(x,D)] ++ G) (app_term_x_args v a) C)) *)
+  (*        (fun G A a' D (H: typingA G A a' D) => (forall C1 C2 a, typingA G A a' (typ_arrow C1 C2) -> typingA G (typ_arrow C1 C2) a D -> typingA G A (app_args_args a' a) D) ) *)
+  (*        (fun G A l D (H: typingL G A l D) => True ) *)
+  (*        (fun G A c C (H: typingC G A c C) => (forall B1 B2 a, typingC G A c (typ_arrow B1 B2) -> *)
+  (*           typingA G (typ_arrow B1 B2) a C -> typingC G A (app_cont_args c a) C)) ). *)
 
   
  Admitted.
@@ -331,7 +331,7 @@ Proof.
     + cbn. destruct (lt_eq_lt_dec n 0) eqn:test.
       * inversion s.
         -- simpl.
-         
+Admitted.
 
 Lemma lcT_appT : forall t a a', lcT t -> lcA a -> lcA a' -> lcT (app t (app_args_args a a')).
 Admitted.
@@ -587,8 +587,8 @@ Proof.
       * inversion_clear H1. apply cc_app2. admit.
     + simpl. destruct t eqn:ttt.
       * destruct n eqn:nnn; inversion H1.
-        -- destruct (testINargs_rec 0 a); inversion H6.
-        -- inversion H6.               
+        -- destruct (testINargs_rec 0 a); inversion H6. admit. admit.
+        -- inversion H6. admit.
       * simpl. inversion_clear H1. unfold pi_refcompCT. apply rc_baseT. constructor.
         -- constructor; [constructor;assumption | assumption].
         -- assumption.
@@ -606,7 +606,7 @@ Proof.
            ++ constructor; [constructor; assumption | assumption | assumption].
       * simpl. unfold pi_refcompCT. inversion_clear H1. apply rc_baseT.
           (* tem que se usar a indução !!! *)
-           admit.          
+           admit. admit. admit.
   - (* args *)
     intros u H l H0 c H1 a' a'' H2 H3 H4. simpl. inversion_clear H2. constructor.
     + apply lcA_appC_appC; assumption. 
@@ -1429,13 +1429,6 @@ Qed.
 (** ** Forall quantification in [lc_???].                                *)
 (*************************************************************************)
 
-Lemma lc_abs_exists : forall (x : var) t,  lcT (t ^ x) -> lcT (abs t).
-Admitted.
-
-Lemma lc_cabs_exists : forall (x : var) v,  lcT (v ^ x) -> lcC (cabs v).
-Admitted.
-
-
 
 
 Lemma subst_lc : forall (x : var) u,
@@ -1566,80 +1559,80 @@ Proof.
   - apply (beta2_lc e1 e2). assumption.
 Qed.
 
-Lemma pi_lc : forall e1 e2, piT e1 e2 -> lcT e1.
-Proof. intros e1 e2 H. inversion H; auto. Qed.
+(* Lemma pi_lc : forall e1 e2, piT e1 e2 -> lcT e1. *)
+(* Proof. intros e1 e2 H. inversion H; auto. Qed. *)
 
-Lemma betapi_lc : forall e1 e2, betapiT e1 e2 -> lcT e1.
-Proof.
-  intros e1 e2 H. inversion H; auto.
-  - apply (beta_lc e1 e2). assumption.
-  - apply (pi_lc e1 e2). assumption.
-Qed.
+(* Lemma betapi_lc : forall e1 e2, betapiT e1 e2 -> lcT e1. *)
+(* Proof. *)
+(*   intros e1 e2 H. inversion H; auto. *)
+(*   - apply (beta_lc e1 e2). assumption. *)
+(*   - apply (pi_lc e1 e2). assumption. *)
+(* Qed. *)
 
 
-Lemma open_app : forall u t a, openT (app t a) u = app (openT t u) (openA a u).
-Proof. reflexivity. Qed.
+(* Lemma open_app : forall u t a, openT (app t a) u = app (openT t u) (openA a u). *)
+(* Proof. reflexivity. Qed. *)
 
-Lemma open_args : forall u t l c, openA (args t l c) u = args (openT t u) (openL l u) (openC c u).
-Proof. reflexivity. Qed.
+(* Lemma open_args : forall u t l c, openA (args t l c) u = args (openT t u) (openL l u) (openC c u). *)
+(* Proof. reflexivity. Qed. *)
 
-Lemma  forall x a, lcA a -> lcA (openA a (var_f x)).
-Proof.
+(* Lemma  forall x a, lcA a -> lcA (openA a (var_f x)). *)
+(* Proof. *)
 
 (****************************** AQUI *********************************)
 
 
-Lemma lc_open : forall u, lcT u ->
-                     (forall t, lcT t -> lcT (openT t u)) /\
-                     (forall a, lcA a -> lcA (openA a u)) /\
-                     (forall l, lcL l -> lcL (openL l u)) /\
-                     (forall c, lcC c -> lcC (openC c u)) .
-Proof.
-    intros u H; split; [ |split]; [ | |split];
-    [ intros t; unfold openT |
-      intros a; unfold openA |
-      intros l; unfold openL |
-      intros c; unfold openC ]; generalize 0; intros.
-    apply (lc_mutind (fun t (_:lcT t) => lcT (open_term_wrt_term_rec n u t)) 
-                     (fun a (_:lcA a) => lcA (open_args_wrt_term_rec n u a))
-                     (fun l (_:lcL l) => lcL (open_alist_wrt_term_rec n u l))
-                     (fun c (_:lcC c) => lcC (open_cont_wrt_term_rec n u c)));
-      intros; simpl; auto.
-    - constructor. intros. unfold openT. 
-      pick fresh x0 for {{x}}.
-      apply (lc_abs_exists x0).
+(* Lemma lc_open : forall u, lcT u -> *)
+(*                      (forall t, lcT t -> lcT (openT t u)) /\ *)
+(*                      (forall a, lcA a -> lcA (openA a u)) /\ *)
+(*                      (forall l, lcL l -> lcL (openL l u)) /\ *)
+(*                      (forall c, lcC c -> lcC (openC c u)) . *)
+(* Proof. *)
+(*     intros u H; split; [ |split]; [ | |split]; *)
+(*     [ intros t; unfold openT | *)
+(*       intros a; unfold openA | *)
+(*       intros l; unfold openL | *)
+(*       intros c; unfold openC ]; generalize 0; intros. *)
+(*     apply (lc_mutind (fun t (_:lcT t) => lcT (open_term_wrt_term_rec n u t))  *)
+(*                      (fun a (_:lcA a) => lcA (open_args_wrt_term_rec n u a)) *)
+(*                      (fun l (_:lcL l) => lcL (open_alist_wrt_term_rec n u l)) *)
+(*                      (fun c (_:lcC c) => lcC (open_cont_wrt_term_rec n u c))); *)
+(*       intros; simpl; auto. *)
+(*     - constructor. intros. unfold openT.  *)
+(*       pick fresh x0 for {{x}}. *)
+(*       apply (lc_abs_exists x0). *)
 
 
-      pick fresh x0 for {{x}}.  (* a tactic to generate x0 <> x *)
-      apply (lc_abs_exists x0).
-      rewrite subst_term_var.
+(*       pick fresh x0 for {{x}}.  (* a tactic to generate x0 <> x *) *)
+(*       apply (lc_abs_exists x0). *)
+(*       rewrite subst_term_var. *)
 
     
-    - lc_abs_exists
-      constructor. assumption.
-  - intros. cbn.
+(*     - lc_abs_exists *)
+(*       constructor. assumption. *)
+(*   - intros. cbn. *)
   
   
-Lemma mu_lc : forall a1 a2, muA a1 a2 -> lcA a1.
-Proof.
-  intros a1 a2 H. destruct H; auto. constructor. 
-  - assumption.
-  - assumption.
-  - constructor. intros. rewrite open_app. constructor.
-    + cbn. auto. 
-    + rewrite open_args. constructor.
+(* Lemma mu_lc : forall a1 a2, muA a1 a2 -> lcA a1. *)
+(* Proof. *)
+(*   intros a1 a2 H. destruct H; auto. constructor.  *)
+(*   - assumption. *)
+(*   - assumption. *)
+(*   - constructor. intros. rewrite open_app. constructor. *)
+(*     + cbn. auto.  *)
+(*     + rewrite open_args. constructor. *)
 
 
 
 
 
-      Eval compute in fun t:term =>
-         (openT (app (var_b 0) (args (var_b 0) anil (cabs (var_b 0)))) t). 
+(*       Eval compute in fun t:term => *)
+(*          (openT (app (var_b 0) (args (var_b 0) anil (cabs (var_b 0)))) t).  *)
 
-    cbn. constructor.
-    + auto. 
-    + constructor.
-      *  cbn.
+(*     cbn. constructor. *)
+(*     + auto.  *)
+(*     + constructor. *)
+(*       *  cbn. *)
 
 
 
