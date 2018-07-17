@@ -34,12 +34,21 @@ Theorem open_preserves_il u t :
   is_lambda u ->
   is_lambda t ->
   is_lambda (openT u t).
+Proof.
+  intros. unfold openT. induction H.
+  - simpl. destruct (lt_eq_lt_dec n 0).
+    + destruct s; auto.
+    + auto. 
+  - simpl. auto.
+  - simpl. constructor.
 Admitted.
 
 Lemma beta_preserves_il t1 t2 : is_lambda t1 -> betaT t1 t2 -> is_lambda t2.
   intros.
   induction H0.
-  - induction H0. apply open_preserves_il; trivial.
+  - induction H0. inversion H. cbn. inversion H5. apply open_preserves_il; trivial.
+  - induction H0. inversion H.
+Qed.
 
 (* Relationship with the external STLC *)
 
