@@ -61,6 +61,23 @@ Proof.
   - intuition.
 Qed.
 
+
+Lemma testIN_open_rec_2 : forall e,
+    (forall t k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t) /\
+    (forall a k, testINargs_rec k a = false -> open_args_wrt_term_rec k e a = a) /\
+    (forall l k, testINalist_rec k l = false -> open_alist_wrt_term_rec k e l = l) /\
+    (forall c k, testINcont_rec k c = false -> open_cont_wrt_term_rec k e c = c).
+Proof.
+  intros e.
+  induction e using term_ind_4 with
+  (P0 := fun a => forall k, testINargs_rec k a = false -> open_args_wrt_term_rec k _ a = a)
+  (P1 := fun l => forall k, testINalist_rec k l = false -> open_alist_wrt_term_rec k _ l = l)
+  (P2 := fun c => forall k, testINcont_rec k c = false -> open_cont_wrt_term_rec k _ c = c).
+
+  repeat split.
+  intros.
+Admitted.
+
 Lemma testIN_open_rec : forall e,
     (forall t k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t) /\
     (forall a k, testINargs_rec k a = false -> open_args_wrt_term_rec k e a = a) /\
