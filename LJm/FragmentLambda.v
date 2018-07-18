@@ -61,6 +61,64 @@ Fixpoint exp_to_terms (e:exp) : term :=
   | S.app t u => app (exp_to_terms t) (args (exp_to_terms u) anil (cabs (var_b 0)))
   end.
 
+Lemma il_abs_inv t : is_lambda (abs t) -> is_lambda t.
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv1 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda t.
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv2 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda u.
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv3 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_b (S n))))).
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv4 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_f n)))).
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv5 t1 t2 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (abs t4)))).
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv6 t1 t2 t3 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (app t3 t4)))).
+  intro H; inversion H; auto.
+Qed.
+
+Lemma il_app_inv7 t1 t2 t3 l c : ~ is_lambda (app t1 (args t2 (t3 ::: l) c)).
+  intro H; inversion H; auto.
+Qed.
+
+Definition terms_to_exp2 t : is_lambda t -> exp.
+  refine ((fix terms_to_exp (t:term) : is_lambda t -> exp :=
+  match t with
+  | var_b n => fun H => S.var_b n
+  | var_f x => fun H => S.var_f x
+  | abs t => fun H => S.abs (terms_to_exp t (il_abs_inv t H))
+  | app t (args u anil (cabs (var_b 0))) =>
+    fun H => S.app (terms_to_exp t (il_app_inv1 t u H)) (terms_to_exp u (il_app_inv2 t u H))
+  | app t1 (args t2 anil (cabs (var_b (S n)))) => fun H => False_rect _ (il_app_inv3 t1 t2 n H)
+  | app t1 (args t2 anil (cabs (var_f x))) => fun H => False_rect _ (il_app_inv4 t1 t2 x H)
+  | app t1 (args t2 anil (cabs (abs t3))) => fun H => False_rect _ (il_app_inv5 t1 t2 t3 H)
+  | app t1 (args t2 anil (cabs (app t3 t4))) => fun H => False_rect _ (il_app_inv6 t1 t2 t3 t4 H)
+  | app t1 (args t2 (t3 ::: l) c) => fun H => False_rect _ (il_app_inv7 t1 t2 t3 l c H)
+  end) t).
+Defined.
+
+(* Fixpoint terms_to_exp t : option exp := *)
+(*   match t with *)
+(*   | var_b n => Some (S.var_b n) *)
+(*   | var_f x => Some (S.var_f x) *)
+(*   | abs t => Some (S.abs (terms_to_exp t)) *)
+(*   | app t (args u anil (cabs (var_b 0))) => *)
+(*     Some (S.app (terms_to_exp t _) (terms_to_exp u _)) *)
+(*   | _ => None *)
+(*   end. *)
+
 Definition terms_to_exp t : is_lambda t -> exp.
   refine ((fix terms_to_exp (t:term) : is_lambda t -> exp :=
   match t with
@@ -74,13 +132,23 @@ Definition terms_to_exp t : is_lambda t -> exp.
 Defined.
 
 Lemma terms_to_exp_id_l t (H: is_lambda t) :
-  exp_to_terms (terms_to_exp t H) = t.
-  induction t.
-  - simpl; trivial.
-  - simpl; trivial.
-  - simpl. fold exp_to_terms.
-    induction t; simpl; auto.
-  - rewrite IHis_lambda1, IHis_lambda2. trivial.
+  exp_to_terms (terms_to_exp2 t H) = t.
+  Check term_ind_4.
+  induction t using term_ind_4 with
+  (P0 := fun a:gmargs =>
+           forall u, a=(args u anil (cabs (var_b 0))) ->
+                     forall H:is_lambda u, exp_to_terms (terms_to_exp2 u H) = u)
+  (P1 := fun l:alist => forall t:True, True)
+  (P2 := fun c:cont => forall t:True, True).
+  - simpl. trivial.
+  - simpl. trivial.
+  - simpl. rewrite IHt. trivial.
+  - inversion H. subst.
+    simpl. rewrite IHt. rewrite IHt0; trivial.
+  - intros. injection H0; intros; subst. rewrite IHt. trivial.
+  - trivial.
+  - trivial.
+  - trivial.
 Qed.
 
 Lemma il_exp_to_terms e : is_lambda (exp_to_terms e).
