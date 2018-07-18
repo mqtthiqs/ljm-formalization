@@ -3,6 +3,7 @@ Require Import Metalib.Metatheory.
 
 Require Import Stlc.Definitions.
 Require Import LJm.Definitions.
+Require Stlc.Extensions.
 
 Module S := Stlc.Definitions.
 Module L := LJm.Definitions.
@@ -30,23 +31,23 @@ Proof.
   - case (x0 == x); auto.
 Qed.
 
-Theorem open_preserves_il u t :
+Lemma open_preserves_il u t :
   is_lambda u ->
-  is_lambda t ->
-  is_lambda (openT u t).
+  is_lambda t -> forall k,
+  is_lambda (open_term_wrt_term_rec k u t).
 Proof.
-  intros. unfold openT. induction H.
-  - simpl. destruct (lt_eq_lt_dec n 0).
-    + destruct s; auto.
-    + auto. 
-  - simpl. auto.
-  - simpl. constructor.
-Admitted.
+  intros H0 H1. induction H1; simpl; auto; intros.
+  destruct (lt_eq_lt_dec n k).
+  - destruct s; auto.
+  - auto.
+Qed.
 
 Lemma beta_preserves_il t1 t2 : is_lambda t1 -> betaT t1 t2 -> is_lambda t2.
   intros.
   induction H0.
-  - induction H0. inversion H. cbn. inversion H5. apply open_preserves_il; trivial.
+
+  - induction H0. inversion H. cbn.
+    inversion H5. apply open_preserves_il; trivial.
   - induction H0. inversion H.
 Qed.
 
@@ -60,23 +61,31 @@ Fixpoint exp_to_terms (e:exp) : term :=
   | S.app t u => app (exp_to_terms t) (args (exp_to_terms u) anil (cabs (var_b 0)))
   end.
 
-(* Fixpoint terms_to_exp (t:term) (H: is_lambda t) : exp := *)
-(*   match H with *)
-(*   | il_var_b n => S.var_b n *)
-(*   | il_var_f x => S.var_f x *)
-(*   | il_abs t H => S.abs (terms_to_exp t H) *)
-(*   | il_app t u H1 H2 => S.app (terms_to_exp t H1) (terms_to_exp u H2) *)
-(*   end. *)
+Definition terms_to_exp t : is_lambda t -> exp.
+  refine ((fix terms_to_exp (t:term) : is_lambda t -> exp :=
+  match t with
+  | var_b n => fun H => S.var_b n
+  | var_f x => fun H => S.var_f x
+  | abs t => fun H => S.abs (terms_to_exp t _)
+  | app t (args u anil (cabs (var_b 0))) => fun H => 
+    S.app (terms_to_exp t _) (terms_to_exp u _)
+  | _ => fun H => False_rect _ _
+  end) t); inversion H; auto.
+Defined.
 
-(* Lemma terms_to_exp_id_l t (H: is_lambda t) : exp_to_terms (terms_to_exp t H) = t. *)
-(*   induction H; simpl; auto. *)
-(*   - rewrite IHis_lambda; trivial. *)
-(*   - rewrite IHis_lambda1, IHis_lambda2. trivial. *)
-(* Qed. *)
+Lemma terms_to_exp_id_l t (H: is_lambda t) :
+  exp_to_terms (terms_to_exp t H) = t.
+  induction t.
+  - simpl; trivial.
+  - simpl; trivial.
+  - simpl. fold exp_to_terms.
+    induction t; simpl; auto.
+  - rewrite IHis_lambda1, IHis_lambda2. trivial.
+Qed.
 
-(* Lemma il_exp_to_terms e : is_lambda (exp_to_terms e). *)
-(*   induction e; simpl; auto. *)
-(* Defined. *)
+Lemma il_exp_to_terms e : is_lambda (exp_to_terms e).
+  induction e; simpl; auto.
+Defined.
 
 (* Print il_exp_to_terms. *)
 
