@@ -181,7 +181,7 @@ Fixpoint open_term_wrt_term_rec (k:nat) (u:term) (e:term) {struct e}: term :=
       match lt_eq_lt_dec n k with
         | inleft (left _)  => var_b n
         | inleft (right _) => u
-        | inright _        => var_b n   (*n-1*)     (* maybe (var_b n) to simplity some proofs *)
+        | inright _        => var_b (n-1)
       end
   | (var_f x)   => var_f x
   | (abs t)     => abs (open_term_wrt_term_rec (S k) u t)

@@ -8,7 +8,8 @@
 
 
 Require Import Metalib.Metatheory.
-Require Import Definitions.
+Require Import Stlc.Definitions.
+Require Import LJm.Definitions.
 
 Import LJmNotations.
 
@@ -78,41 +79,43 @@ Proof.
   intros.
 Admitted.
 
+(* MJF: TODO ;) *)
+
 Lemma testIN_open_rec : forall e,
     (forall t k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t) /\
     (forall a k, testINargs_rec k a = false -> open_args_wrt_term_rec k e a = a) /\
     (forall l k, testINalist_rec k l = false -> open_alist_wrt_term_rec k e l = l) /\
     (forall c k, testINcont_rec k c = false -> open_cont_wrt_term_rec k e c = c).
 Proof.
-
-  intros e.
-  apply (term_gmargs_alist_cont_mutind
-           (fun t => forall k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t) 
-           (fun a => forall k, testINargs_rec k a = false -> open_args_wrt_term_rec k e a = a) 
-           (fun l => forall k, testINalist_rec k l = false -> open_alist_wrt_term_rec k e l = l) 
-           (fun c => forall k, testINcont_rec k c = false -> open_cont_wrt_term_rec k e c = c)); intros.
-  - apply testIN_var_b in H. simpl. destruct (lt_eq_lt_dec n k).
-    + destruct s.
-      * reflexivity.
-      * exfalso. auto.
-    + reflexivity.
-  - reflexivity.
-  - simpl. f_equal. simpl in H0. apply H. assumption.
-  - simpl. f_equal.
-    + apply H. simpl in H1. apply orb_false_elim in H1. destruct H1. assumption.
-    + apply H0. simpl in H1. apply orb_false_elim in H1; destruct H1; assumption. 
-  - simpl. f_equal.
-    + apply H. simpl in H2. apply orb_false_elim in H2. destruct H2.
-      apply orb_false_elim in H2. destruct H2. assumption.
-    + apply H0. simpl in H2. apply orb_false_elim in H2. destruct H2.
-      apply orb_false_elim in H2. destruct H2. assumption.
-    + apply H1. simpl in H2. apply orb_false_elim in H2. destruct H2. assumption.
-  - reflexivity.
-  - simpl. f_equal.
-    + apply H. simpl in H1. apply orb_false_elim in H1. destruct H1. assumption.
-    + apply H0. simpl in H1.  apply orb_false_elim in H1. destruct H1. assumption.
-  - simpl. f_equal. apply H. simpl in H0. assumption.
-Qed.    
+Admitted.
+(*   intros e. *)
+(*   apply (term_gmargs_alist_cont_mutind *)
+(*            (fun t => forall k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t)  *)
+(*            (fun a => forall k, testINargs_rec k a = false -> open_args_wrt_term_rec k e a = a)  *)
+(*            (fun l => forall k, testINalist_rec k l = false -> open_alist_wrt_term_rec k e l = l)  *)
+(*            (fun c => forall k, testINcont_rec k c = false -> open_cont_wrt_term_rec k e c = c)); intros. *)
+(*   - apply testIN_var_b in H. simpl. destruct (lt_eq_lt_dec n k). *)
+(*     + destruct s. *)
+(*       * reflexivity. *)
+(*       * exfalso. auto. *)
+(*     + reflexivity. *)
+(*   - reflexivity. *)
+(*   - simpl. f_equal. simpl in H0. apply H. assumption. *)
+(*   - simpl. f_equal. *)
+(*     + apply H. simpl in H1. apply orb_false_elim in H1. destruct H1. assumption. *)
+(*     + apply H0. simpl in H1. apply orb_false_elim in H1; destruct H1; assumption.  *)
+(*   - simpl. f_equal. *)
+(*     + apply H. simpl in H2. apply orb_false_elim in H2. destruct H2. *)
+(*       apply orb_false_elim in H2. destruct H2. assumption. *)
+(*     + apply H0. simpl in H2. apply orb_false_elim in H2. destruct H2. *)
+(*       apply orb_false_elim in H2. destruct H2. assumption. *)
+(*     + apply H1. simpl in H2. apply orb_false_elim in H2. destruct H2. assumption. *)
+(*   - reflexivity. *)
+(*   - simpl. f_equal. *)
+(*     + apply H. simpl in H1. apply orb_false_elim in H1. destruct H1. assumption. *)
+(*     + apply H0. simpl in H1.  apply orb_false_elim in H1. destruct H1. assumption. *)
+(*   - simpl. f_equal. apply H. simpl in H0. assumption. *)
+(* Qed.     *)
 
 Lemma testIN_openT_rec : forall e t k, testINterm_rec k t = false -> open_term_wrt_term_rec k e t = t.
 Proof. apply testIN_open_rec. Qed.
