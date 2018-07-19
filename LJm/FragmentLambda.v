@@ -1,4 +1,7 @@
 
+Axiom ff : False.
+Notation "???" := (False_rect _ ff).
+
 Require Import Metalib.Metatheory.
 
 Require Import Stlc.Definitions.
@@ -21,7 +24,28 @@ Inductive is_lambda : term -> Prop :=
 
 Hint Constructors is_lambda.
 
-Theorem subst_preserves_il u x t :
+(* Inversion lemmas on is_lambda *)
+
+Lemma il_abs_inv t : is_lambda (abs t) -> is_lambda t.
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv1 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda t.
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv2 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda u.
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv3 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_b (S n))))).
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv4 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_f n)))).
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv5 t1 t2 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (abs t4)))).
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv6 t1 t2 t3 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (app t3 t4)))).
+  intro H; inversion H; auto. Qed.
+Lemma il_app_inv7 t1 t2 t3 l c : ~ is_lambda (app t1 (args t2 (t3 ::: l) c)).
+  intro H; inversion H; auto. Qed.
+
+(* Lemmas on substitution *)
+
+Lemma subst_preserves_il u x t :
   is_lambda u ->
   is_lambda t ->
   is_lambda (substT u x t).
@@ -45,13 +69,16 @@ Qed.
 Lemma beta_preserves_il t1 t2 : is_lambda t1 -> betaT t1 t2 -> is_lambda t2.
   intros.
   induction H0.
-
   - induction H0. inversion H. cbn.
     inversion H5. apply open_preserves_il; trivial.
   - induction H0. inversion H.
 Qed.
 
-(* Relationship with the external STLC *)
+(*******************
+ * relationship with the external STLC 
+ *******************)
+
+(* E ----> T *)
 
 Fixpoint exp_to_terms (e:exp) : term :=
   match e with
@@ -61,85 +88,52 @@ Fixpoint exp_to_terms (e:exp) : term :=
   | S.app t u => app (exp_to_terms t) (args (exp_to_terms u) anil (cabs (var_b 0)))
   end.
 
-Lemma il_abs_inv t : is_lambda (abs t) -> is_lambda t.
-  intro H; inversion H; auto.
-Qed.
+Lemma il_exp_to_terms e : is_lambda (exp_to_terms e).
+  induction e; simpl; auto.
+Defined.
 
-Lemma il_app_inv1 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda t.
-  intro H; inversion H; auto.
-Qed.
+(* T ----> E *)
 
-Lemma il_app_inv2 t u : is_lambda (app t (args u anil (cabs (var_b 0)))) -> is_lambda u.
-  intro H; inversion H; auto.
-Qed.
+(* v1: directly using inversion lemmas: *)
 
-Lemma il_app_inv3 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_b (S n))))).
-  intro H; inversion H; auto.
-Qed.
-
-Lemma il_app_inv4 t1 t2 n : ~ is_lambda (app t1 (args t2 anil (cabs (var_f n)))).
-  intro H; inversion H; auto.
-Qed.
-
-Lemma il_app_inv5 t1 t2 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (abs t4)))).
-  intro H; inversion H; auto.
-Qed.
-
-Lemma il_app_inv6 t1 t2 t3 t4 : ~ is_lambda (app t1 (args t2 anil (cabs (app t3 t4)))).
-  intro H; inversion H; auto.
-Qed.
-
-Lemma il_app_inv7 t1 t2 t3 l c : ~ is_lambda (app t1 (args t2 (t3 ::: l) c)).
-  intro H; inversion H; auto.
-Qed.
-
-Definition terms_to_exp2 t : is_lambda t -> exp.
-  refine ((fix terms_to_exp (t:term) : is_lambda t -> exp :=
+Fixpoint term_to_exp t : is_lambda t -> exp :=
   match t with
   | var_b n => fun H => S.var_b n
   | var_f x => fun H => S.var_f x
-  | abs t => fun H => S.abs (terms_to_exp t (il_abs_inv t H))
+  | abs t => fun H => S.abs (term_to_exp t (il_abs_inv t H))
   | app t (args u anil (cabs (var_b 0))) =>
-    fun H => S.app (terms_to_exp t (il_app_inv1 t u H)) (terms_to_exp u (il_app_inv2 t u H))
+    fun H => S.app (term_to_exp t (il_app_inv1 t u H)) (term_to_exp u (il_app_inv2 t u H))
   | app t1 (args t2 anil (cabs (var_b (S n)))) => fun H => False_rect _ (il_app_inv3 t1 t2 n H)
   | app t1 (args t2 anil (cabs (var_f x))) => fun H => False_rect _ (il_app_inv4 t1 t2 x H)
   | app t1 (args t2 anil (cabs (abs t3))) => fun H => False_rect _ (il_app_inv5 t1 t2 t3 H)
   | app t1 (args t2 anil (cabs (app t3 t4))) => fun H => False_rect _ (il_app_inv6 t1 t2 t3 t4 H)
   | app t1 (args t2 (t3 ::: l) c) => fun H => False_rect _ (il_app_inv7 t1 t2 t3 l c H)
-  end) t).
-Defined.
+  end.
 
-(* Fixpoint terms_to_exp t : option exp := *)
-(*   match t with *)
-(*   | var_b n => Some (S.var_b n) *)
-(*   | var_f x => Some (S.var_f x) *)
-(*   | abs t => Some (S.abs (terms_to_exp t)) *)
-(*   | app t (args u anil (cabs (var_b 0))) => *)
-(*     Some (S.app (terms_to_exp t _) (terms_to_exp u _)) *)
-(*   | _ => None *)
-(*   end. *)
+(* v2: using refine and tactics (more verbose in proofs) *)
 
-Definition terms_to_exp t : is_lambda t -> exp.
-  refine ((fix terms_to_exp (t:term) : is_lambda t -> exp :=
+Definition term_to_exp2 t : is_lambda t -> exp.
+  refine ((fix term_to_exp (t:term) : is_lambda t -> exp :=
   match t with
   | var_b n => fun H => S.var_b n
   | var_f x => fun H => S.var_f x
-  | abs t => fun H => S.abs (terms_to_exp t _)
+  | abs t => fun H => S.abs (term_to_exp t _)
   | app t (args u anil (cabs (var_b 0))) => fun H => 
-    S.app (terms_to_exp t _) (terms_to_exp u _)
+    S.app (term_to_exp t _) (term_to_exp u _)
   | _ => fun H => False_rect _ _
   end) t); inversion H; auto.
 Defined.
 
-Lemma terms_to_exp_id_l t (H: is_lambda t) :
-  exp_to_terms (terms_to_exp2 t H) = t.
-  Check term_ind_4.
+(* identity proof 1 : T -> E -> T *)
+
+Lemma term_to_exp_id_l t (H : is_lambda t) :
+  exp_to_terms (term_to_exp t H) = t.
   induction t using term_ind_4 with
   (P0 := fun a:gmargs =>
-           forall u, a=(args u anil (cabs (var_b 0))) ->
-                     forall H:is_lambda u, exp_to_terms (terms_to_exp2 u H) = u)
-  (P1 := fun l:alist => forall t:True, True)
-  (P2 := fun c:cont => forall t:True, True).
+           forall u, a = args u anil (cabs (var_b 0)) ->
+                     forall H:is_lambda u, exp_to_terms (term_to_exp u H) = u)
+    (P1 := fun l:alist => forall t:True, True)
+    (P2 := fun c:cont => forall t:True, True).
   - simpl. trivial.
   - simpl. trivial.
   - simpl. rewrite IHt. trivial.
@@ -151,14 +145,81 @@ Lemma terms_to_exp_id_l t (H: is_lambda t) :
   - trivial.
 Qed.
 
-Lemma il_exp_to_terms e : is_lambda (exp_to_terms e).
-  induction e; simpl; auto.
-Defined.
+(* identity proof 1 (v2) : using a dedicated induction principle *)
 
-(* Print il_exp_to_terms. *)
+(* WIP: MP *)
+Fixpoint term_is_lambda_ind (P : term -> Prop)
+         (H1 : forall n : nat, P (var_b n))
+         (H2 : forall x : atom, P (var_f x))
+         (H3 : forall t : term, P t -> P (abs t))
+         (H4 : forall t u : term, P t -> P u -> P (app t (args u anil (cabs (var_b 0)))))
+         t : is_lambda t -> P t :=
+  match t with
+  | var_b n => fun H => H1 n
+  | var_f x => fun H => H2 x
+  | abs t => fun H => H3 t (term_is_lambda_ind P H1 H2 H3 H4 t (il_abs_inv t H))
+  | app t (args u anil (cabs (var_b 0))) => fun H => 
+    H4 t u (term_is_lambda_ind P H1 H2 H3 H4 t (il_app_inv1 t u H))
+       (term_is_lambda_ind P H1 H2 H3 H4 u (il_app_inv2 t u H))
+  | _ => ???
+  end.
 
-(* Lemma exp_to_terms_id_r e : terms_to_exp (exp_to_terms e) (il_exp_to_terms e) = e. *)
-(*   induction e; simpl; auto. *)
-(*   - rewrite IHe. trivial. *)
-(*   - rewrite IHe1, IHe2; trivial. *)
-(* Qed. *)
+Lemma term_to_exp_id_l2 : forall t, forall H : is_lambda t,
+      exp_to_terms (term_to_exp t H) = t.  
+  (* TODO *)
+  (* apply term_is_lambda_ind; simpl; trivial. *)
+  (* - rewrite IHt; trivial. *)
+  (* - rewrite IHt1. rewrite IHt2. trivial. *)
+Admitted.
+
+(* identity proof 2 : E -> T -> E *)
+
+Lemma exp_to_terms_id_r e : forall H, term_to_exp (exp_to_terms e) H = e.
+  induction e; simpl; auto; intro.
+  - rewrite IHe. trivial.
+  - rewrite IHe1, IHe2; trivial.
+Qed.
+
+
+(********
+ * Preservation of typing
+ ********)
+
+(* WIP: MP *)
+
+Lemma typing_implies_uniq G e A : typing G e A -> uniq G.
+  induction 1; trivial.
+Admitted.
+
+Lemma open_commutes_with_exp_to_terms e1 e2 :
+  exp_to_terms (StlcNotations.open e1 e2) = openT (exp_to_terms e1) (exp_to_terms e2).
+  induction e1; cbn; auto.
+  - case n; cbn; trivial.
+  - admit.
+  - unfold open_exp_wrt_exp in *.
+    rewrite IHe1_1, IHe1_2. trivial.
+Admitted.
+
+Theorem typing_preserved1 G e A : uniq G -> typing G e A -> typingT G (exp_to_terms e) A.
+  intros.
+  induction H0; simpl; auto.
+  - apply typingT_Right with (L:=L `union` dom G); intros.
+    simpl.
+    change (typingT ((x, T1) :: G) (openT (exp_to_terms e) (exp_to_terms (S.var_f x))) T2).
+    rewrite <- open_commutes_with_exp_to_terms.
+    apply H1; auto. 
+  - apply typingT_Cut with (A:=T1) (B:=T2).
+    + exact (IHtyping1 H).
+    + apply typingA_Leftm with (C:=T2).
+      * exact (IHtyping2 H).
+      * apply typingL_Ax. trivial.
+      * apply typingC_Select with (L:=dom G). intros.
+        apply typingT_Axiom.
+        -- auto.
+        -- auto.
+Qed.
+
+Theorem typing_preserved2 G t A : typingT G t A -> forall H : is_lambda t, typing G (term_to_exp2 t H) A.
+  intros.
+  admit.
+Admitted.
