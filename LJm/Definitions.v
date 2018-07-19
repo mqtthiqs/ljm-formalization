@@ -551,6 +551,19 @@ Inductive muA : gmargs -> gmargs -> Prop :=
          (args u1 (l1 +@+ (u2:::l2)) c).
 
 
+
+
+
+
+(***********************************************************************)
+(** * Closures *)
+(***********************************************************************)
+
+(** WIP: mjf  *)
+
+
+
+
 (* Reflexive closure of R (in terms) *)
 Inductive rcRTT (R : term -> term -> Prop) : term -> term -> Prop :=
  | rc_baseT : forall (t t':term),
