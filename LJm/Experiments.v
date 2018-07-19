@@ -51,3 +51,29 @@ Lemma term_to_exp_id_l3 t (H : is_lambda t) :
   induction H; simpl; auto.
   (* I give up! *)
 Abort.
+
+(*********
+ ** Append in locally nameless style.
+ ** The function is not structually recursive anymore; how to make it accept?
+ *********)
+
+Definition fresh_in (L : atoms) : atom :=
+  match atom_fresh L with exist _ x P => x end.
+
+Fixpoint app_args_args (a1:gmargs) (a2:gmargs) {struct a1}: gmargs :=
+  match a1 with
+  | (args t l c)  => args t l (app_cont_args c a2)
+  end
+with app_cont_args (c:cont) (a:gmargs) : cont :=
+  match c with
+  | cabs v =>
+    let x := fresh_in (fvT v) in
+    cabs (closeT x (app_term_x_args x (openT v (var_f x)) a))
+  end
+with app_term_x_args (x:atom) (v:term) (a:gmargs) {struct v}: term :=
+  match v with
+  | (app (var_b 0) a1) => if (AtomSetImpl.mem x (fvA a))   (* if 0 is in a1 *)
+                         then app v a
+                         else app (var_b 0) (app_args_args a1 a)
+  | _                  => app v a
+  end.

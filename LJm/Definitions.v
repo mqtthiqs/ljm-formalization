@@ -262,56 +262,6 @@ Definition in_alist l := testINalist_rec 0 l.
 Definition in_cont c  := testINcont_rec 0 c.
 
 
-
-Fixpoint app_args_args (a1:gmargs) (a2:gmargs) {struct a1}: gmargs :=
-  match a1 with
-  | (args t l c)  => args t l (app_cont_args c a2)
-  end
-with app_cont_args (c:cont) (a:gmargs) {struct c}: cont :=
-  match c with
-  | (cabs v)  => cabs (app_term_x_args v a)    
-  end
-with app_term_x_args (v:term) (a:gmargs) {struct v}: term :=
-  match v with
-  | (app (var_b 0) a1) => if (testINargs_rec 0 a1)   (* if 0 is in a1 *)
-                         then app v a
-                         else app (var_b 0) (app_args_args a1 a)
-  | _                  => app v a     
-  end.
-
-Fixpoint app_term_args (t:term) (a:gmargs) {struct t}: term :=
-  match t with
-  | (app t1 a1)   => app t1 (app_args_args a1 a)
-  | _             => app t a
-  end.
-
-
-Fixpoint app_term_cont (t:term) (c:cont): term :=
-  match c with
-  | (cabs v)  => open_term_wrt_term v t     
-  end.
-
-Fixpoint app_cont_cont (c1:cont) (c2:cont) {struct c1}: cont :=
-  match c1 with
-  | (cabs (var_b 0))  => c2
-  | (cabs (app (var_b 0) (args u l c))) =>
-              if (testINargs_rec 0 (args u l c))
-              then  cabs (app_term_cont (app (var_b 0) (args u l c)) c2)
-              else  cabs (app (var_b 0) (args u l (app_cont_cont c c2)))
-              
-  | (cabs v)  => cabs (app_term_cont v c2)
-  end.
-
-Fixpoint app_alist_alist (l1:alist) (l2:alist): alist :=
-  match l1 with
-  | anil          => l2
-  | (acons t l3)  => acons t (app_alist_alist l3 l2)
-  end.
-
-
-
-
-
 (***********************************************************************)
 (** * Local closure *)
 (***********************************************************************)
@@ -424,6 +374,56 @@ Import LJmNotations.
 Open Scope term_scope.
 
 
+(***********************************************************************)
+(** * Append operation *)
+(***********************************************************************)
+
+Fixpoint app_args_args (a1:gmargs) (a2:gmargs) {struct a1}: gmargs :=
+  match a1 with
+  | (args t l c)  => args t l (app_cont_args c a2)
+  end
+with app_cont_args (c:cont) (a:gmargs) : cont :=
+  match c with
+  | cabs v =>
+    cabs (app_term_x_args v a)
+  end
+with app_term_x_args (v:term) (a:gmargs) {struct v}: term :=
+  match v with
+  | (app (var_b 0) a1) => if (testINargs_rec 0 a1)   (* if 0 is in a1 *)
+                         then app v a
+                         else app (var_b 0) (app_args_args a1 a)
+  | _                  => app v a
+  end.
+
+Fixpoint app_term_args (t:term) (a:gmargs) {struct t}: term :=
+  match t with
+  | (app t1 a1)   => app t1 (app_args_args a1 a)
+  | _             => app t a
+  end.
+
+Fixpoint app_term_cont (t:term) (c:cont): term :=
+  match c with
+  | (cabs v)  => open_term_wrt_term v t     
+  end.
+
+Fixpoint app_cont_cont (c1:cont) (c2:cont) {struct c1}: cont :=
+  match c1 with
+  | (cabs (var_b 0))  => c2
+  | (cabs (app (var_b 0) (args u l c))) =>
+              if (testINargs_rec 0 (args u l c))
+              then  cabs (app_term_cont (app (var_b 0) (args u l c)) c2)
+              else  cabs (app (var_b 0) (args u l (app_cont_cont c c2)))
+              
+  | (cabs v)  => cabs (app_term_cont v c2)
+  end.
+
+Fixpoint app_alist_alist (l1:alist) (l2:alist): alist :=
+  match l1 with
+  | anil          => l2
+  | (acons t l3)  => acons t (app_alist_alist l3 l2)
+  end.
+
+Notation "l1 +@+ l2"    := (app_alist_alist l1 l2) (at level 0, right associativity): term_scope.
 
 (***********************************************************************)
 (** * Typing contexts *)
