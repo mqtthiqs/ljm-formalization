@@ -289,3 +289,37 @@ with x. apply lcT_from_lc_exp. trivial.
    - apply lcT_from_lc_exp. trivial.
    - constructor. intro. cbn.  trivial.
 Qed.
+
+Lemma term_to_exp_commutes_open: forall e1 e2
+(H1:is_lambda e1) (H2:is_lambda e2) (H:is_lambda (openT e2 e1)),
+term_to_exp (open_term_wrt_term_rec 0 e1 e2) H =
+open (term_to_exp e2 H2)(term_to_exp e1 H1).
+Admitted.
+
+Lemma term_to_exp_preserves_lc: forall t H, lcT t -> lc_exp(term_to_exp t H).
+  intros.
+  inversion H; subst; cbn; trivial.
+  - inversion H0.
+  - inversion H0; subst.
+    constructor; intro.
+Admitted.
+
+Theorem term_to_exp_preserves_beta1: forall e1 e2,
+forall (H1:is_lambda e1) (H2:is_lambda e2),
+beta1T e1 e2 -> beta (term_to_exp e1 H1) (term_to_exp e2 H2).
+Proof.
+  intros e1 e2 H1 H2 H. induction H. inversion H1. subst.
+  unfold open_term_wrt_term in *. simpl in *. inversion H6.
+  rewrite (term_to_exp_commutes_open u t
+                                     (il_app_inv2 (abs t) u H1)
+                                     (il_abs_inv t (il_app_inv1 (abs t) u H1))).
+  apply beta_base.
+  - apply S.lc_abs. intro x.
+    change (S.lc_exp (open
+                        ((term_to_exp t) (il_abs_inv t (il_app_inv1 (abs t) u H1)))
+                        (term_to_exp (L.var_f x) (il_var_f x)))).
+    rewrite <- (term_to_exp_commutes_open _ _ _ _ (open_preserves_il (L.var_f x) 
+                                                                    t (il_var_f x) H5 0)).
+    apply term_to_exp_preserves_lc. inversion H. apply H9.
+  - apply term_to_exp_preserves_lc. apply H0.
+Qed.
