@@ -12,6 +12,8 @@ Module S := Stlc.Definitions.
 Module L := LJm.Definitions.
 
 Import L.LJmNotations.
+Import S.StlcNotations.
+
 
 Inductive is_lambda : term -> Prop :=
 | il_var_b (n:nat) : is_lambda (var_b n)
@@ -223,3 +225,95 @@ Theorem typing_preserved2 G t A : typingT G t A -> forall H : is_lambda t, typin
   intros.
   admit.
 Admitted.
+
+
+(************************
+*** simulation of Stlc beta 
+*************************)
+
+(* below is a copy of the beta relation from STLC *)
+
+Inductive beta : exp -> exp -> Prop :=
+ | beta_base : forall (e1 e2:exp),
+     lc_exp (S.abs e1) ->
+     lc_exp e2 ->
+     beta (S.app  (S.abs e1) e2)  (open e1 e2)
+.
+
+Hint Constructors beta.
+
+(*The lemmata that follow lead to the thm on the simulation of a beta step at STLC by a beta1 step in lJm*)
+
+(* The lemma below is almost done, and should hold provided the mismatch between the definition of open in lJm and STLC at the var_b case is eliminated *)
+
+Lemma commut_opens_rec : forall e2 e1 k, exp_to_terms (open_exp_wrt_exp_rec k e1 e2) = open_term_wrt_term_rec k (exp_to_terms e1) (exp_to_terms e2) .
+Proof.
+  intro.
+  induction e2.
+  - intros. case (k==n).
+    + intro. rewrite <- e. cbn.   destruct (lt_eq_lt_dec k k).
+      *  destruct s.
+         -- auto.
+         -- auto.
+      * firstorder.
+    + intro. cbn. destruct (lt_eq_lt_dec n k).
+       *  destruct s; auto.
+       *   cbn.  admit.  (*ALERT: there is mismatch between the definitions of open in lJm and in STLC*)
+  - intros. cbn. reflexivity.
+  - intros. cbn. f_equal. eauto.
+  - intros. cbn. f_equal.
+    + eauto.
+    + f_equal. eauto.
+Admitted.
+
+
+Lemma commut_opens : forall e1 e2, exp_to_terms (open e1 e2) = openT (exp_to_terms e1) (exp_to_terms e2) .
+Proof.
+ intros.    unfold open. unfold openT.  apply commut_opens_rec.
+Qed.
+
+Lemma lcT_from_lc_exp : forall e, lc_exp e -> lcT (exp_to_terms e).
+Proof.
+  intros. induction H.
+  - simpl. constructor.
+  - cbn. constructor. intro.  specialize  (H0 x). rewrite commut_opens in H0. auto.
+  - cbn. constructor.
+    + assumption.
+    + constructor; auto. constructor. intro. cbn. auto.
+Qed.
+
+Lemma bv_zero : forall n, lcT (abs (var_b n)) -> n=0.
+Proof.
+  intros. inversion H. pick fresh x.  specialize (H1 x). cbn in H1. destruct (lt_eq_lt_dec n 0).
+  - destruct s.
+    + inversion H1.
+    + trivial.
+  - inversion H1.
+Qed.
+
+(* the lemma below is still not proved, and it is not clear the proof through it is the natural way to prove the simulation thm below *)
+
+Lemma lc_open_from_lambda_terms: forall t u, lcT (abs t) -> lcT u -> lcT (openT t u).
+Proof.
+  intros. induction t.
+  - cbn. destruct (lt_eq_lt_dec n 0).
+    + destruct s. apply bv_zero in  H.
+      * rewrite H in l. inversion l.
+      * assumption.
+    + apply bv_zero in  H.
+      * rewrite H in l. inversion l.
+  - cbn. constructor.
+  - cbn. constructor. intro.
+Admitted.
+
+
+Theorem sim_by_beta_term: forall e1 e2,   beta e1 e2 -> beta1T (exp_to_terms e1) (exp_to_terms e2).
+Proof.
+  intros. inversion H. simpl.  subst. rewrite  commut_opens. constructor.
+  - constructor. intro. inversion H0.
+    apply lcT_from_lc_exp in H0. apply lc_open_from_lambda_terms.
+    + change (lcT (exp_to_terms(S.abs e0))).  trivial.
+    + constructor.
+  - apply lcT_from_lc_exp. trivial.
+  - constructor. intro. cbn.  trivial.
+Qed.
