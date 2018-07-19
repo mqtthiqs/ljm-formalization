@@ -3,7 +3,6 @@ Require Import Metalib.Metatheory.
 
 Require Import Stlc.Definitions.
 Require Import LJm.Definitions.
-Require Stlc.Extensions.
 
 Require Import FragmentLambda.
 
