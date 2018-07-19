@@ -8,7 +8,7 @@
 
 Require Import Metalib.Metatheory.
 
-      
+Require Import Stlc.Definitions.
 
 (***********************************************************************)
 (** * Syntax of LJm *)
@@ -24,9 +24,7 @@ Require Import Metalib.Metatheory.
 
     Note: the type [var] is notation for [atom].  *)
 
-Inductive typ : Set :=  (*r types *)
- | typ_base : typ
- | typ_arrow (T1:typ) (T2:typ).
+Definition typ := Stlc.Definitions.typ.
 
 
 Inductive term : Set :=    (*r proof terms *)
