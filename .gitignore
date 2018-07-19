@@ -16,3 +16,5 @@ Stlc/extra/stlc-rules.tex
 Makefile.bak
 *~
 .coqdeps.d
+CoqMakefile.conf
+Makefile.conf

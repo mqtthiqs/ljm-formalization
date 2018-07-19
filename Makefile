@@ -2,11 +2,11 @@ DIRS = Metalib Stlc LJm
 
 all:
 	@echo Building Metalib...
-	(cd Metalib; make; make install; make doc)
+	(cd Metalib; make; make install)
 	@echo Building Stlc...
-	(cd Stlc; make; make install; make html)
+	(cd Stlc; make; make install)
 	@echo Building LJm...
-	(cd LJm; make; make html)
+	(cd LJm; make)
 
 clean:
 	@set -e; for d in $(DIRS); \
