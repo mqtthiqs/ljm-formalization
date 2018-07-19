@@ -183,6 +183,35 @@ Lemma exp_to_terms_id_r e : forall H, term_to_exp (exp_to_terms e) H = e.
 Qed.
 
 
+Lemma commut_opens_rec : forall e2 e1 k, exp_to_terms 
+(open_exp_wrt_exp_rec k e1 e2) = open_term_wrt_term_rec k (exp_to_terms 
+e1) (exp_to_terms e2) .
+Proof.
+   intro.
+   induction e2.
+   - intros. case (k==n).
+     + intro. rewrite <- e. cbn. destruct (lt_eq_lt_dec k k).
+       *  destruct s.
+          -- auto.
+          -- auto.
+       * firstorder.
+     + intro. cbn. destruct (lt_eq_lt_dec n k).
+        *  destruct s; auto.
+        *   cbn.  reflexivity.
+   - intros. cbn. reflexivity.
+   - intros. cbn. f_equal. eauto.
+   - intros. cbn. f_equal.
+     + eauto.
+     + f_equal. eauto.
+Qed.
+
+Lemma commut_opens : forall e1 e2,
+    exp_to_terms (open e1 e2) = openT (exp_to_terms e1) (exp_to_terms e2) .
+Proof.
+ intros. unfold open. unfold openT. apply commut_opens_rec.
+Qed.
+
+
 (********
  * Preservation of typing
  ********)
@@ -193,22 +222,13 @@ Lemma typing_implies_uniq G e A : typing G e A -> uniq G.
   induction 1; trivial.
 Admitted.
 
-Lemma open_commutes_with_exp_to_terms e1 e2 :
-  exp_to_terms (StlcNotations.open e1 e2) = openT (exp_to_terms e1) (exp_to_terms e2).
-  induction e1; cbn; auto.
-  - case n; cbn; trivial.
-  - admit.
-  - unfold open_exp_wrt_exp in *.
-    rewrite IHe1_1, IHe1_2. trivial.
-Admitted.
-
 Theorem typing_preserved1 G e A : uniq G -> typing G e A -> typingT G (exp_to_terms e) A.
   intros.
   induction H0; simpl; auto.
   - apply typingT_Right with (L:=L `union` dom G); intros.
     simpl.
     change (typingT ((x, T1) :: G) (openT (exp_to_terms e) (exp_to_terms (S.var_f x))) T2).
-    rewrite <- open_commutes_with_exp_to_terms.
+    rewrite <- commut_opens.
     apply H1; auto. 
   - apply typingT_Cut with (A:=T1) (B:=T2).
     + exact (IHtyping1 H).
@@ -244,34 +264,6 @@ Hint Constructors beta.
 
 (*The lemmata that follow lead to the thm on the simulation of a beta step at STLC by a beta1 step in lJm*)
 
-(* The lemma below is almost done, and should hold provided the mismatch between the definition of open in lJm and STLC at the var_b case is eliminated *)
-
-Lemma commut_opens_rec : forall e2 e1 k, exp_to_terms (open_exp_wrt_exp_rec k e1 e2) = open_term_wrt_term_rec k (exp_to_terms e1) (exp_to_terms e2) .
-Proof.
-  intro.
-  induction e2.
-  - intros. case (k==n).
-    + intro. rewrite <- e. cbn.   destruct (lt_eq_lt_dec k k).
-      *  destruct s.
-         -- auto.
-         -- auto.
-      * firstorder.
-    + intro. cbn. destruct (lt_eq_lt_dec n k).
-       *  destruct s; auto.
-       *   cbn.  admit.  (*ALERT: there is mismatch between the definitions of open in lJm and in STLC*)
-  - intros. cbn. reflexivity.
-  - intros. cbn. f_equal. eauto.
-  - intros. cbn. f_equal.
-    + eauto.
-    + f_equal. eauto.
-Admitted.
-
-
-Lemma commut_opens : forall e1 e2, exp_to_terms (open e1 e2) = openT (exp_to_terms e1) (exp_to_terms e2) .
-Proof.
- intros.    unfold open. unfold openT.  apply commut_opens_rec.
-Qed.
-
 Lemma lcT_from_lc_exp : forall e, lc_exp e -> lcT (exp_to_terms e).
 Proof.
   intros. induction H.
@@ -291,29 +283,13 @@ Proof.
   - inversion H1.
 Qed.
 
-(* the lemma below is still not proved, and it is not clear the proof through it is the natural way to prove the simulation thm below *)
-
-Lemma lc_open_from_lambda_terms: forall t u, lcT (abs t) -> lcT u -> lcT (openT t u).
+Theorem sim_by_beta_term: forall e1 e2,   beta e1 e2 -> beta1T 
+(exp_to_terms e1) (exp_to_terms e2).
 Proof.
-  intros. induction t.
-  - cbn. destruct (lt_eq_lt_dec n 0).
-    + destruct s. apply bv_zero in  H.
-      * rewrite H in l. inversion l.
-      * assumption.
-    + apply bv_zero in  H.
-      * rewrite H in l. inversion l.
-  - cbn. constructor.
-  - cbn. constructor. intro.
-Admitted.
-
-
-Theorem sim_by_beta_term: forall e1 e2,   beta e1 e2 -> beta1T (exp_to_terms e1) (exp_to_terms e2).
-Proof.
-  intros. inversion H. simpl.  subst. rewrite  commut_opens. constructor.
-  - constructor. intro. inversion H0.
-    apply lcT_from_lc_exp in H0. apply lc_open_from_lambda_terms.
-    + change (lcT (exp_to_terms(S.abs e0))).  trivial.
-    + constructor.
-  - apply lcT_from_lc_exp. trivial.
-  - constructor. intro. cbn.  trivial.
+   intros. inversion H. simpl.  subst. rewrite  commut_opens. constructor.
+   - constructor. intro. inversion H0. change ( lcT (openT (exp_to_terms 
+e0) (exp_to_terms (S.var_f x)))). rewrite <- commut_opens. specialize H3 
+with x. apply lcT_from_lc_exp. trivial.
+   - apply lcT_from_lc_exp. trivial.
+   - constructor. intro. cbn.  trivial.
 Qed.
