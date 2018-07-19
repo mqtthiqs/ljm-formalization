@@ -6,7 +6,6 @@ Require Import Metalib.Metatheory.
 
 Require Import Stlc.Definitions.
 Require Import LJm.Definitions.
-Require Stlc.Extensions.
 
 Module S := Stlc.Definitions.
 Module L := LJm.Definitions.
@@ -211,7 +210,6 @@ Proof.
  intros. unfold open. unfold openT. apply commut_opens_rec.
 Qed.
 
-
 (********
  * Preservation of typing
  ********)
@@ -257,12 +255,9 @@ Inductive beta : exp -> exp -> Prop :=
  | beta_base : forall (e1 e2:exp),
      lc_exp (S.abs e1) ->
      lc_exp e2 ->
-     beta (S.app  (S.abs e1) e2)  (open e1 e2)
-.
+     beta (S.app (S.abs e1) e2) (open e1 e2).
 
 Hint Constructors beta.
-
-(*The lemmata that follow lead to the thm on the simulation of a beta step at STLC by a beta1 step in lJm*)
 
 Lemma lcT_from_lc_exp : forall e, lc_exp e -> lcT (exp_to_terms e).
 Proof.
@@ -276,7 +271,7 @@ Qed.
 
 Lemma bv_zero : forall n, lcT (abs (var_b n)) -> n=0.
 Proof.
-  intros. inversion H. pick fresh x.  specialize (H1 x). cbn in H1. destruct (lt_eq_lt_dec n 0).
+  intros. inversion H. pick fresh x. specialize (H1 x). cbn in H1. destruct (lt_eq_lt_dec n 0).
   - destruct s.
     + inversion H1.
     + trivial.
@@ -287,8 +282,9 @@ Theorem sim_by_beta_term: forall e1 e2,   beta e1 e2 -> beta1T
 (exp_to_terms e1) (exp_to_terms e2).
 Proof.
    intros. inversion H. simpl.  subst. rewrite  commut_opens. constructor.
-   - constructor. intro. inversion H0. change ( lcT (openT (exp_to_terms 
-e0) (exp_to_terms (S.var_f x)))). rewrite <- commut_opens. specialize H3 
+   - constructor. intro. inversion H0.
+     change ( lcT (openT (exp_to_terms e0) (exp_to_terms (S.var_f x)))).
+     rewrite <- commut_opens. specialize H3 
 with x. apply lcT_from_lc_exp. trivial.
    - apply lcT_from_lc_exp. trivial.
    - constructor. intro. cbn.  trivial.
