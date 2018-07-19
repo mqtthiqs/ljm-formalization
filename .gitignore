@@ -18,3 +18,4 @@ Makefile.bak
 .coqdeps.d
 CoqMakefile.conf
 Makefile.conf
+CoqSrc.mk.conf
