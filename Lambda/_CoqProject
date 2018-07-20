@@ -1,0 +1,5 @@
+-R . Lambda
+-R ../LambdaJm LambdaJm
+-R ../ELambda ELambda
+Syntax.v
+Reduction.v

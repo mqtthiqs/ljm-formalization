@@ -1,15 +1,11 @@
-DIRS = Metalib Stlc LJm
+DIRS = Metalib ELambda LambdaJm Lambda
 
 all:
-	@echo Building Metalib...
-	(cd Metalib; make; make install)
-	@echo Building Stlc...
-	(cd Stlc; make; make install)
-	@echo Building LJm...
-	(cd LJm; make)
+	for d in $(DIRS); do \
+	  make -C $$d all install; \
+	done
 
 clean:
-	@set -e; for d in $(DIRS); \
-                   do echo Cleaning $$d...; \
-                   $(MAKE) -C $$d clean; \
-                 done
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d clean; \
+	done

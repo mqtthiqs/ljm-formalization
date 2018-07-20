@@ -1,7 +1,3 @@
--R . Elambda
-Connect.v
+-R . ELambda
 Definitions.v
-Lec1.v
-Lec2.v
 Lemmas.v
-Nominal.v

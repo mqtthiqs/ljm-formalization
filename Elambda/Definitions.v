@@ -149,12 +149,12 @@ Definition open_exp_wrt_exp e u := open_exp_wrt_exp_rec 0 u e.
     for index [0] in [e]" and "open [e] with the variable [x]."
 *)
 
-Module ElambdaNotations.
+Module ELambdaNotations.
 Notation "[ z ~> u ] e" := (subst_exp u z e) (at level 0) : exp_scope.
 Notation open e1 e2     := (open_exp_wrt_exp e1 e2).
 Notation "e ^ x"        := (open_exp_wrt_exp e (var_f x)) : exp_scope.
-End ElambdaNotations.
-Import ElambdaNotations.
+End ELambdaNotations.
+Import ELambdaNotations.
 Open Scope exp_scope.
 
 (***********************************************************************)
@@ -259,6 +259,14 @@ Definition is_value (e : exp) : Prop :=
     Note also the hypotheses in [step] that ensure that the relation holds
     only for locally closed terms.  *)
 
+Inductive beta : exp -> exp -> Prop :=
+ | beta_base : forall (e1 e2:exp),
+     lc_exp (abs e1) ->
+     lc_exp e2 ->
+     beta (app (abs e1) e2) (open e1 e2).
+
+Hint Constructors beta.
+
 Inductive step : exp -> exp -> Prop :=
  | step_beta : forall (e1 e2:exp),
      lc_exp (abs e1) ->
@@ -271,3 +279,21 @@ Inductive step : exp -> exp -> Prop :=
 
 
 Hint Constructors typing step lc_exp.
+
+
+Inductive ccBeta : exp -> exp -> Prop :=
+ | ccBbase : forall (e1 e2:exp),
+     beta e1 e2 ->
+     ccBeta e1 e2
+ | ccBapp1 : forall (e1 e2 e:exp),
+     ccBeta e1 e2 -> lc_exp e ->
+     ccBeta (app e1 e) (app e2 e)
+ | ccBapp2 : forall (e1 e2 e:exp),
+     ccBeta e1 e2 -> lc_exp e ->
+     ccBeta (app e e1) (app e e2)
+ | ccBabs : forall (e1 e2:exp) (L:vars),
+     (forall (x:var), x `notin` L ->
+                 ccBeta (open e1 (var_f x))  (open e2 (var_f x))) ->
+     ccBeta (abs e1) (abs e2).
+
+Hint Constructors ccBeta.
