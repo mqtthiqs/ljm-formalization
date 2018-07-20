@@ -368,48 +368,6 @@ Inductive ccBeta : exp -> exp -> Prop :=
 
 Hint Constructors ccBeta.
 
-(* assumes from the base relation one can conclude local closedness for both terms *)
-(* NOTE: the definition below should eventualy replace the one in LJm Definitions.v 
-  and the proofs bellow adjusted by adding the prefix Definitions. *)
-
-Inductive ccRTT (R : term -> term -> Prop) : term -> term -> Prop :=   (* in terms *)
- | cc_base : forall (t t':term),
-     R t t' -> ccRTT R t t'
- | cc_abs : forall (t t':term) (L:vars),
-     (forall (x:var), x `notin` L ->
-     ccRTT R (openT t (var_f x))  (openT t' (var_f x))) -> ccRTT R (abs t) (abs t')
- | cc_app1 : forall (t t':term) (a:gmargs), lcA a ->
-     ccRTT R t t' -> ccRTT R (app t a) (app t' a)
- | cc_app2 : forall (t:term) (a a':gmargs), lcT t ->
-     ccRTA R a a' -> ccRTT R (app t a) (app t a')
-with ccRTA (R : term -> term -> Prop) : gmargs -> gmargs -> Prop :=    (* in gmargs *)
- | cc_args1 : forall (u u':term) (l:alist) (c:cont), lcL l -> lcC c ->
-     ccRTT R u u' -> ccRTA R (args u l c) (args u' l c)
- | cc_args2 : forall (u:term) (l l':alist) (c:cont), lcT u -> lcC c ->
-     ccRTL R l l' -> ccRTA R (args u l c) (args u l' c)
- | cc_args3 : forall (u:term) (l:alist) (c c':cont), lcT u -> lcL l ->
-     ccRTC R c c' -> ccRTA R (args u l c) (args u l c')
-with ccRTL (R : term -> term -> Prop) : alist -> alist -> Prop :=     (* in alist *)
- | cc_head : forall (u u':term) (l:alist), lcL l ->
-     ccRTT R u u' -> ccRTL R (acons u l) (acons u' l)
- | cc_tail : forall (u :term) (l l':alist), lcT u ->
-     ccRTL R l l' -> ccRTL R (acons u l) (acons u l')
-with ccRTC (R : term -> term -> Prop) : cont -> cont -> Prop :=       (* in cont *)
- | cc_cabs : forall (v v':term) (L:vars),
-     (forall (x:var), x `notin` L ->
-     ccRTT R (openT v (var_f x))  (openT v' (var_f x)))
-      -> ccRTC R (cabs v) (cabs v').
-
-
-Scheme ccRTT_ind_4 := Induction for ccRTT Sort Prop
-  with ccRTA_ind_4 := Induction for ccRTA Sort Prop
-  with ccRTL_ind_4 := Induction for ccRTL Sort Prop   
-  with ccRTC_ind_4 := Induction for ccRTC Sort Prop.
-
-
-Combined Scheme ccRT_mutind from
-         ccRTT_ind_4, ccRTA_ind_4, ccRTL_ind_4, ccRTC_ind_4.
-
 Definition ccBeta1T := ccRTT beta1T.
 
 
