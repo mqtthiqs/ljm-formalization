@@ -23,19 +23,6 @@ Inductive is_lambda : term -> Prop :=
     is_lambda u ->
     is_lambda (app t (args u anil (cabs (var_b 0)))).
 
-(* Question (MP: wouldn't it make more sense to define is_lambda in LN
-style, this way? *)
-Module Is_Lambda_LN.
-  Inductive is_lambda : term -> Prop :=
-  | il_var_f (x:var) : is_lambda (var_f x)
-  | il_abs (t:term) (L:vars) : (forall x, x `notin` L -> is_lambda (openT t (var_f x))) ->
-                               is_lambda (abs t)
-  | il_app (t u:term) :
-      is_lambda t ->
-      is_lambda u ->
-      is_lambda (app t (args u anil (cabs (var_b 0)))).
-End Is_Lambda_LN.
-
 Hint Constructors is_lambda.
 
 (* Inversion lemmas on is_lambda *)
@@ -309,23 +296,58 @@ Proof.
       rewrite <- (is_lambda_proofs_unique _ H1 H5). trivial.
 Qed.
 
-(* WIP: MP *)
-Lemma term_to_exp_preserves_lc: forall t,
-    lcT t -> forall H, lc_exp (term_to_exp t H).
-  intros.
-  induction H using lc_term_ind_4 with
-  (P0 := fun x H => forall x, True)
-  (P1 := fun x H => forall x, True)
-  (P2 := fun x H => forall x, True); simpl; auto.
 
+(* WIP: MP *)
+Module TEST.
+
+  Inductive is_lambda : term -> Prop :=
+  | il_var_b (n:nat) : is_lambda (var_b n)
+  | il_var_f (x:var) : is_lambda (var_f x)
+  | il_abs (t:term) : is_lambda t -> is_lambda (abs t)
+  | il_app (t u:term) :
+      is_lambda t ->
+      is_lambda u ->
+      is_lambda (app t (args u anil (cabs (var_b 0)))).
+
+  Lemma term_to_exp_preserves_lc: forall t,
+      forall H, lcT t -> lc_exp (term_to_exp t H).
+    intros t H.
+  (* refine (is_lambda_ind *)
+  (*           (fun t' => forall H, lcT t' -> lc_exp (term_to_exp t' H)) *)
+  (*           _ _ _ _ t H H); intros; simpl; auto. *)
+  (* - inversion H1. *)
+  (* - constructor; intro. *)
+  (*   change (lc_exp (open (term_to_exp t0 (il_abs_inv t0 H2)) (term_to_exp (var_f x) (il_var_f x)))). *)
+  (*   unfold open_exp_wrt_exp. *)
+  (*   assert (is_lambda (open_term_wrt_term_rec 0 (var_f x) t0)). *)
+  (*   apply open_preserves_il; auto. *)
+  (*   rewrite <- (term_to_exp_commutes_open (var_f x) t0 (il_var_f x) (il_abs_inv t0 H2) 0 H4). *)
+
+    Admitted.
+End TEST.
+
+Lemma term_to_exp_preserves_lc: forall t,
+    forall H, lcT t -> lc_exp (term_to_exp t H).
+  intros t H H0.
+  induction H0 using lc_term_ind_4 with
+  (P0 := fun (a:gmargs) (H:lcA a) => forall (u:term), a = args u anil (cabs (var_b 0)) -> forall H : is_lambda u, lc_exp (term_to_exp u H))
+  (P1 := fun (l:alist) (H:lcL l) => forall (x:True), True)
+  (P2 := fun (c:cont) (H:lcC c) => forall (x:True), True); simpl; auto.
   - constructor; intro.
-    change (lc_exp (open (term_to_exp t (il_abs_inv t H0))
+    change (lc_exp (open (term_to_exp t (il_abs_inv t H))
                          (term_to_exp (L.var_f x) (il_var_f x)))).
     unfold open_exp_wrt_exp.
-    (* rewrite <- (term_to_exp_commutes_open _ _ _ _ 0 _). *)
-    (* apply H. *)
-  (* - *)
-Admitted.
+    assert (is_lambda (open_term_wrt_term_rec 0 (L.var_f x) t)).
+    apply open_preserves_il; inversion H; auto.
+    rewrite <- (term_to_exp_commutes_open _ _ _ _ 0 H1).
+    apply H0.
+  - inversion H; subst. constructor.
+    + trivial.
+    + apply IHlc_term0.
+      trivial.
+  - intros. inversion H1; subst.
+    apply IHlc_term.
+Qed.
 
 
 Theorem term_to_exp_preserves_beta1: forall t u,
