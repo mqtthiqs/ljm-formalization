@@ -319,7 +319,8 @@ Hint Constructors ccBeta.
 (* assumes from the base relation one can conclude local closedness for both terms *)
 (* NOTE: the definition below should eventualy replace the one in LJm Definitions.v 
   and the proofs bellow adjusted by adding the prefix Definitions. *)
-Inductive ccRTT (R : term -> term -> Prop) : term -> term -> Prop :=
+
+Inductive ccRTT (R : term -> term -> Prop) : term -> term -> Prop :=   (* in terms *)
  | cc_base : forall (t t':term),
      R t t' -> ccRTT R t t'
  | cc_abs : forall (t t':term) (L:vars),
@@ -337,9 +338,9 @@ with ccRTA (R : term -> term -> Prop) : gmargs -> gmargs -> Prop :=    (* in gma
  | cc_args3 : forall (u:term) (l:alist) (c c':cont), lcT u -> lcL l ->
      ccRTC R c c' -> ccRTA R (args u l c) (args u l c')
 with ccRTL (R : term -> term -> Prop) : alist -> alist -> Prop :=     (* in alist *)
- | cc_head : forall (u u':term) (l:alist) , lcL l ->
+ | cc_head : forall (u u':term) (l:alist), lcL l ->
      ccRTT R u u' -> ccRTL R (acons u l) (acons u' l)
- | cc_tail : forall (u :term) (l l':alist) , lcT u ->
+ | cc_tail : forall (u :term) (l l':alist), lcT u ->
      ccRTL R l l' -> ccRTL R (acons u l) (acons u l')
 with ccRTC (R : term -> term -> Prop) : cont -> cont -> Prop :=       (* in cont *)
  | cc_cabs : forall (v v':term) (L:vars),
