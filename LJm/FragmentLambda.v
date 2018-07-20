@@ -347,7 +347,7 @@ Proof.
                                                                     t (il_var_f x) H5 0)).
     apply term_to_exp_preserves_lc. inversion H. apply H7.
   - apply term_to_exp_preserves_lc. apply H0.
-
+Qed.
 
 (* Definition of full compatible closure of beta ---not in Stlc   *)
 
