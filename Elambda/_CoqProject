@@ -1,4 +1,4 @@
--R . Stlc
+-R . Elambda
 Connect.v
 Definitions.v
 Lec1.v

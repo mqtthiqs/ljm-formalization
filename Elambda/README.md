@@ -45,14 +45,14 @@ and [LNgen](https://github.com/plclub/lngen) tools.
      gen.mk            - Makefile recipes for invoking Ott/LNgen/LaTex
 
      stlc.pdf          - PDF version of rules
-     Stlc.v            - Ott-generated version of `Definitions.v`
-     Stlc_inf.v        - LNgen generated version of `Lemmas.v`
+     Elambda.v            - Ott-generated version of `Definitions.v`
+     Elambda_inf.v        - LNgen generated version of `Lemmas.v`
 
   If you have Ott and LNgen installed, you may also generate the files above.
 
     `make -f gen.mk stlc.pdf`
-    `make -f gen.mk Stlc.v`
-    `make -f gen.mk Stlc_inf.v`
+    `make -f gen.mk Elambda.v`
+    `make -f gen.mk Elambda_inf.v`
 
 CREDITS
 

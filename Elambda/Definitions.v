@@ -149,12 +149,12 @@ Definition open_exp_wrt_exp e u := open_exp_wrt_exp_rec 0 u e.
     for index [0] in [e]" and "open [e] with the variable [x]."
 *)
 
-Module StlcNotations.
+Module ElambdaNotations.
 Notation "[ z ~> u ] e" := (subst_exp u z e) (at level 0) : exp_scope.
 Notation open e1 e2     := (open_exp_wrt_exp e1 e2).
 Notation "e ^ x"        := (open_exp_wrt_exp e (var_f x)) : exp_scope.
-End StlcNotations.
-Import StlcNotations.
+End ElambdaNotations.
+Import ElambdaNotations.
 Open Scope exp_scope.
 
 (***********************************************************************)
