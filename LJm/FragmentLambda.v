@@ -23,6 +23,19 @@ Inductive is_lambda : term -> Prop :=
     is_lambda u ->
     is_lambda (app t (args u anil (cabs (var_b 0)))).
 
+(* Question (MP: wouldn't it make more sense to define is_lambda in LN
+style, this way? *)
+Module Is_Lambda_LN.
+  Inductive is_lambda : term -> Prop :=
+  | il_var_f (x:var) : is_lambda (var_f x)
+  | il_abs (t:term) (L:vars) : (forall x, x `notin` L -> is_lambda (openT t (var_f x))) ->
+                               is_lambda (abs t)
+  | il_app (t u:term) :
+      is_lambda t ->
+      is_lambda u ->
+      is_lambda (app t (args u anil (cabs (var_b 0)))).
+End Is_Lambda_LN.
+
 Hint Constructors is_lambda.
 
 (* Inversion lemmas on is_lambda *)
@@ -146,33 +159,6 @@ Lemma term_to_exp_id_l t (H : is_lambda t) :
   - trivial.
 Qed.
 
-(* identity proof 1 (v2) : using a dedicated induction principle *)
-
-(* WIP: MP *)
-Fixpoint term_is_lambda_ind (P : term -> Prop)
-         (H1 : forall n : nat, P (var_b n))
-         (H2 : forall x : atom, P (var_f x))
-         (H3 : forall t : term, P t -> P (abs t))
-         (H4 : forall t u : term, P t -> P u -> P (app t (args u anil (cabs (var_b 0)))))
-         t : is_lambda t -> P t :=
-  match t with
-  | var_b n => fun H => H1 n
-  | var_f x => fun H => H2 x
-  | abs t => fun H => H3 t (term_is_lambda_ind P H1 H2 H3 H4 t (il_abs_inv t H))
-  | app t (args u anil (cabs (var_b 0))) => fun H => 
-    H4 t u (term_is_lambda_ind P H1 H2 H3 H4 t (il_app_inv1 t u H))
-       (term_is_lambda_ind P H1 H2 H3 H4 u (il_app_inv2 t u H))
-  | _ => ???
-  end.
-
-Lemma term_to_exp_id_l2 : forall t, forall H : is_lambda t,
-      exp_to_terms (term_to_exp t H) = t.  
-  (* TODO *)
-  (* apply term_is_lambda_ind; simpl; trivial. *)
-  (* - rewrite IHt; trivial. *)
-  (* - rewrite IHt1. rewrite IHt2. trivial. *)
-Admitted.
-
 (* identity proof 2 : E -> T -> E *)
 
 Lemma exp_to_terms_id_r e : forall H, term_to_exp (exp_to_terms e) H = e.
@@ -284,32 +270,65 @@ Proof.
    intros. inversion H. simpl.  subst. rewrite  commut_opens. constructor.
    - constructor. intro. inversion H0.
      change ( lcT (openT (exp_to_terms e0) (exp_to_terms (S.var_f x)))).
-     rewrite <- commut_opens. specialize H3 
-with x. apply lcT_from_lc_exp. trivial.
+     rewrite <- commut_opens. specialize H3 with x. apply lcT_from_lc_exp. trivial.
    - apply lcT_from_lc_exp. trivial.
    - constructor. intro. cbn.  trivial.
 Qed.
 
-Lemma term_to_exp_commutes_open: forall e1 e2
-(H1:is_lambda e1) (H2:is_lambda e2) (H:is_lambda (openT e2 e1)),
-term_to_exp (open_term_wrt_term_rec 0 e1 e2) H =
-open (term_to_exp e2 H2)(term_to_exp e1 H1).
+Lemma is_lambda_proofs_unique t :
+  forall (H1 : is_lambda t) (H2 : is_lambda t), H1 = H2.
+  Check is_lambda_ind.
 Admitted.
-
-Lemma term_to_exp_preserves_lc: forall t H, lcT t -> lc_exp(term_to_exp t H).
-  intros.
-  inversion H; subst; cbn; trivial.
-  - inversion H0.
-  - inversion H0; subst.
-    constructor; intro.
-Admitted.
-
-Theorem term_to_exp_preserves_beta1: forall e1 e2,
-forall (H1:is_lambda e1) (H2:is_lambda e2),
-beta1T e1 e2 -> beta (term_to_exp e1 H1) (term_to_exp e2 H2).
+  
+Lemma term_to_exp_commutes_open t u (H1:is_lambda t) (H2:is_lambda u) :
+  forall k H, term_to_exp (open_term_wrt_term_rec k t u) H =
+         open_exp_wrt_exp_rec k (term_to_exp t H1) (term_to_exp u H2).
 Proof.
-  intros e1 e2 H1 H2 H. induction H. inversion H1. subst.
-  unfold open_term_wrt_term in *. simpl in *. inversion H6.
+  refine (is_lambda_ind
+         (fun u => forall (H1 : is_lambda t) (H2 : is_lambda u) (k : nat) (H : is_lambda (open_term_wrt_term_rec k t u)),
+              term_to_exp (open_term_wrt_term_rec k t u) H =
+              open_exp_wrt_exp_rec k (term_to_exp t H1)
+                                   (term_to_exp u H2))
+         _ _ _ _ u H2 H1 H2); intros; simpl.
+  - simpl in H. destruct (lt_eq_lt_dec n k); try destruct s; auto.
+    + rewrite (is_lambda_proofs_unique _ H H0). trivial.
+  - reflexivity.
+  - f_equal. rewrite (H0 H1 H).
+    rewrite <- (is_lambda_proofs_unique _ H (il_abs_inv t0 H4)).
+    rewrite <- (is_lambda_proofs_unique _ H1 H3).
+    trivial.
+  - f_equal.
+    + auto.
+    + rewrite (H4 H1 H3).
+      rewrite <- (is_lambda_proofs_unique _ H3 (il_app_inv2 t0 u0 H6)).
+      rewrite <- (is_lambda_proofs_unique _ H1 H5). trivial.
+Qed.
+
+(* WIP: MP *)
+Lemma term_to_exp_preserves_lc: forall t,
+    lcT t -> forall H, lc_exp (term_to_exp t H).
+  intros.
+  induction H using lc_term_ind_4 with
+  (P0 := fun x H => forall x, True)
+  (P1 := fun x H => forall x, True)
+  (P2 := fun x H => forall x, True); simpl; auto.
+
+  - constructor; intro.
+    change (lc_exp (open (term_to_exp t (il_abs_inv t H0))
+                         (term_to_exp (L.var_f x) (il_var_f x)))).
+    unfold open_exp_wrt_exp.
+    (* rewrite <- (term_to_exp_commutes_open _ _ _ _ 0 _). *)
+    (* apply H. *)
+  (* - *)
+Admitted.
+
+
+Theorem term_to_exp_preserves_beta1: forall t u,
+forall (H1:is_lambda t) (H2:is_lambda u),
+beta1T t u -> beta (term_to_exp t H1) (term_to_exp u H2).
+Proof.
+  intros e1 e2 H1 H2 H. induction H. inversion H1; subst.
+  unfold open_term_wrt_term in *. simpl in *. inversion H6; subst.
   rewrite (term_to_exp_commutes_open u t
                                      (il_app_inv2 (abs t) u H1)
                                      (il_abs_inv t (il_app_inv1 (abs t) u H1))).
@@ -318,8 +337,9 @@ Proof.
     change (S.lc_exp (open
                         ((term_to_exp t) (il_abs_inv t (il_app_inv1 (abs t) u H1)))
                         (term_to_exp (L.var_f x) (il_var_f x)))).
-    rewrite <- (term_to_exp_commutes_open _ _ _ _ (open_preserves_il (L.var_f x) 
+    unfold open_exp_wrt_exp.
+    rewrite <- (term_to_exp_commutes_open _ _ _ _ 0 (open_preserves_il (L.var_f x) 
                                                                     t (il_var_f x) H5 0)).
-    apply term_to_exp_preserves_lc. inversion H. apply H9.
+    apply term_to_exp_preserves_lc. inversion H. apply H7.
   - apply term_to_exp_preserves_lc. apply H0.
 Qed.
