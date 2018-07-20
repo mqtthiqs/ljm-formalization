@@ -506,18 +506,18 @@ Combined Scheme typing_mutind from
 
 Inductive beta1T : term -> term -> Prop :=
  | beta1_rule : forall (t u v:term),
-     lc_term (abs t) ->
-     lc_term u ->
-     lc_cont (cabs v) ->
-     beta1T (app  (abs t) (args u anil (cabs v))) (openT v (openT t u)).
+     lcT (abs t) ->
+     lcT u ->
+     lcC (cabs v) ->
+     beta1T (app (abs t) (args u anil (cabs v))) (openT v (openT t u)).
 
 Inductive beta2T : term -> term -> Prop :=
  | beta2_rule : forall (t u u':term) (l:alist) (c:cont),
-     lc_term (abs t) ->
-     lc_term u ->
-     lc_term u' ->
-     lc_alist l ->
-     lc_cont c ->
+     lcT (abs t) ->
+     lcT u ->
+     lcT u' ->
+     lcL l ->
+     lcC c ->
      beta2T (app (abs t) (args u (acons u' l) c)) (app (openT t u) (args u' l c)).
 
 Inductive betaT : term -> term -> Prop :=
@@ -528,9 +528,9 @@ Inductive betaT : term -> term -> Prop :=
 
 Inductive piT : term -> term -> Prop :=
  | pi_rule : forall (t:term) (a a':gmargs),
-     lc_term t ->
-     lc_gmargs a ->
-     lc_gmargs a' ->
+     lcT t ->
+     lcA a ->
+     lcA a' ->
      piT (app (app t a) a') (app t (app_args_args a a')).
 
 Inductive betapiT : term -> term -> Prop :=
@@ -540,104 +540,133 @@ Inductive betapiT : term -> term -> Prop :=
      piT t t' -> betapiT t t'.
 
 Inductive muA : gmargs -> gmargs -> Prop :=
-| mu_rule : forall (u1 u2:term) (l1 l2:alist) (c:cont),
-     lc_term u1 ->
-     lc_term u2 ->
-     lc_alist l1 ->
-     lc_alist l2 ->
-     lc_cont c ->
-     testINargs_rec 0 (args u2 l2 c) = false ->                            
-     muA (args u1 l1 (cabs (app (var_b 0) (args u2 l2 c))))
-         (args u1 (l1 +@+ (u2:::l2)) c).
+| mu_rule : forall (u u':term) (l l':alist) (c':cont),
+     lcT u ->
+     lcT u' ->
+     lcL l ->
+     lcL l' ->
+     lcC c' ->
+     muA (args u l (cabs (app (var_b 0) (args u' l' c'))))
+         (args u (l +@+ (u':::l')) c').
 
+
+
+
+
+
+(***********************************************************************)
+(** * Closures *)
+(***********************************************************************)
+
+(** WIP: mjf  *)
+
+
+(**************************
+ * Reflexive closures
+ **************************)
 
 (* Reflexive closure of R (in terms) *)
 Inductive rcRTT (R : term -> term -> Prop) : term -> term -> Prop :=
  | rc_baseT : forall (t t':term),
-     lc_term t -> 
-     lc_term t' ->  (* Probably not needed, since it follows from the other two. *)
+     lcT t -> 
+     lcT t' ->  (* Probably not needed, since it follows from the other two. *)
      R t t' -> rcRTT R t t'
- | rc_reflT : forall (t :term), lc_term t -> rcRTT R t t.
+ | rc_reflT : forall (t :term), lcT t -> rcRTT R t t.
 
 (* Reflexive closure of R (in gmargs) *)
 Inductive rcRAA (R : gmargs -> gmargs -> Prop) : gmargs -> gmargs -> Prop := 
  | rc_baseA : forall (a a':gmargs),
-     lc_gmargs a -> 
+     lcA a -> 
+     lcA a' ->  (* Probably not needed, since it follows from the other two. *)
      R a a' -> rcRAA R a a'
- | rc_reflA : forall (a :gmargs), lc_gmargs a -> rcRAA R a a.
+ | rc_reflA : forall (a :gmargs), lcA a -> rcRAA R a a.
 
 (* Reflexive closure of R (in alist) *)
 Inductive rcRLL (R : alist -> alist -> Prop) : alist -> alist -> Prop := 
  | rc_baseL : forall (l l':alist),
-     lc_alist l -> 
+     lcL l ->
+     lcL l' ->  (* Probably not needed, since it follows from the other two. *)
      R l l' -> rcRLL R l l'
- | rc_reflL : forall (l :alist), lc_alist l -> rcRLL R l l.
+ | rc_reflL : forall (l :alist), lcL l -> rcRLL R l l.
 
 (* Reflexive closure of R (in cont) *)
 Inductive rcRCC (R : cont -> cont -> Prop) : cont -> cont -> Prop := 
  | rc_baseC : forall (c c':cont),
-     lc_cont c -> 
-     R c c' -> rcRCC R c c'
- | rc_reflC : forall (c :cont), lc_cont c -> rcRCC R c c.
+     lcC c -> 
+     lcC c' ->  (* Probably not needed, since it follows from the other two. *)
+    R c c' -> rcRCC R c c'
+ | rc_reflC : forall (c :cont), lcC c -> rcRCC R c c.
 
 
+
+
+(**************************
+ * Transitive closures
+ **************************)
 
 (* Transitive closure of R (in terms) *)
 Inductive tcRTT (R : term -> term -> Prop) : term -> term -> Prop :=
  | tc_base : forall (t t':term),
-     lc_term t -> 
-     lc_term t' ->  (* Probably not needed, since it follows from the other two. *)
+     lcT t -> 
+     lcT t' ->  (* Probably not needed, since it follows from the other two. *)
      R t t' -> tcRTT R t t'
  | tc_trans : forall (t t' t'':term),
-     lc_term t ->
-     lc_term t'->  (* Probably not needed, since it follows from the other two. *)
-     R t t' -> tcRTT R t' t'' -> tcRTT R t t''.
+     tcRTT R t t' -> tcRTT R t' t'' -> tcRTT R t t''.
+
 
 (*......*)
 
-(* Transitive-reflexive closure of R (in terms) *)
-Inductive trcRTT (R : term -> term -> Prop) : term -> term -> Prop :=
- | trc_base : forall (t t':term),
-     lc_term t -> 
-     lc_term t' ->  (* Probably not needed, since it follows from the other two. *)
-     R t t' -> trcRTT R t t'
- | trc_trans : forall (t t' t'':term),
-     lc_term t ->
-     lc_term t'->  (* Probably not needed, since it follows from the other two. *)
-     R t t' -> trcRTT R t' t'' -> trcRTT R t t''
- | trc_refl : forall (t :term),
-     lc_term t -> trcRTT R t t.
+
+(**************************
+ * Reflexive-transitive closures
+ **************************)
+
+
+(* Reflexive-transitive closure of R (in terms) *)
+
+Definition rtcRTT (R : term -> term -> Prop) : term -> term -> Prop := tcRTT (rcRTT R).
+
 
 (*......*)
 
+
+
+(**************************
+ * Compatible closures
+ **************************)
   
 (* Compatible closure of R (in terms) *)
+
 Inductive ccRTT (R : term -> term -> Prop) : term -> term -> Prop :=
  | cc_base : forall (t t':term),
-     lc_term t -> 
-     lc_term t' ->  (* Probably not needed, since it follows from the other two. *)
-     R t t' -> ccRTT R t t'
- | cc_abs : forall (t t':term),
-     ccRTT R t t' -> ccRTT R (abs t) (abs t')
- | cc_app1 : forall (t t':term) (a:gmargs),
+     R t t' -> ccRTT R t t'  (* here we are assuming that (R t t') -> lcT t /\ lcT t', 
+                               which is ok for beta but has to be proved for the other rules *)
+ (* the alternative definition is
+    | cc_base : forall (t t':term), lcT t ->  lcT t' ->  R t t' -> ccRTT R t t'    *)
+ | cc_abs : forall (t t':term) (L:vars),
+     (forall (x:var), x `notin` L ->
+     ccRTT R (openT t (var_f x)) (openT t' (var_f x))) -> ccRTT R (abs t) (abs t')
+ | cc_app1 : forall (t t':term) (a:gmargs), lcA a ->
      ccRTT R t t' -> ccRTT R (app t a) (app t' a)
- | cc_app2 : forall (t:term) (a a':gmargs),
+ | cc_app2 : forall (t:term) (a a':gmargs), lcT t ->
      ccRTA R a a' -> ccRTT R (app t a) (app t a')
 with ccRTA (R : term -> term -> Prop) : gmargs -> gmargs -> Prop :=    (* in gmargs *)
- | cc_args1 : forall (u u':term) (l:alist) (c:cont),
+ | cc_args1 : forall (u u':term) (l:alist) (c:cont), lcL l -> lcC c ->
      ccRTT R u u' -> ccRTA R (args u l c) (args u' l c)
- | cc_args2 : forall (u:term) (l l':alist) (c:cont),
+ | cc_args2 : forall (u:term) (l l':alist) (c:cont), lcT u -> lcC c ->
      ccRTL R l l' -> ccRTA R (args u l c) (args u l' c)
- | cc_args3 : forall (u:term) (l:alist) (c c':cont),
+ | cc_args3 : forall (u:term) (l:alist) (c c':cont), lcT u -> lcL l ->
      ccRTC R c c' -> ccRTA R (args u l c) (args u l c')
 with ccRTL (R : term -> term -> Prop) : alist -> alist -> Prop :=     (* in alist *)
- | cc_head : forall (u u':term) (l:alist) ,
+ | cc_head : forall (u u':term) (l:alist) , lcL l ->
      ccRTT R u u' -> ccRTL R (acons u l) (acons u' l)
- | cc_tail : forall (u :term) (l l':alist) ,
+ | cc_tail : forall (u :term) (l l':alist) , lcT u ->
      ccRTL R l l' -> ccRTL R (acons u l) (acons u l')
 with ccRTC (R : term -> term -> Prop) : cont -> cont -> Prop :=       (* in cont *)
- | cc_cabs : forall (v v':term),
-     ccRTT R v v' -> ccRTC R (cabs v) (cabs v').
+ | cc_cabs : forall (v v':term) (L:vars),
+     (forall (x:var), x `notin` L ->
+     ccRTT R (openT v (var_f x))  (openT v' (var_f x)))
+      -> ccRTC R (cabs v) (cabs v').
 
 
 Scheme ccRTT_ind_4 := Induction for ccRTT Sort Prop
@@ -650,34 +679,36 @@ Combined Scheme ccRT_mutind from
          ccRTT_ind_4, ccRTA_ind_4, ccRTL_ind_4, ccRTC_ind_4.
 
 
-
 (* Compatible closure of R (in gmargs) *)
-Inductive ccRAT (R : gmargs -> gmargs -> Prop) : term -> term -> Prop :=
- | ccA_abs : forall (t t':term),
-     ccRAT R t t' -> ccRAT R (abs t) (abs t')
- | ccA_app1 : forall (t t':term) (a:gmargs),
+Inductive ccRAT (R : gmargs -> gmargs -> Prop) : term -> term -> Prop :=     (* in terms *)
+ | ccA_abs : forall (t t':term) (L:vars),
+     (forall (x:var), x `notin` L ->                                     
+     ccRAT R (t^x) (t'^x) )-> ccRAT R (abs t) (abs t')                          
+ | ccA_app1 : forall (t t':term) (a:gmargs), lcA a ->
      ccRAT R t t' -> ccRAT R (app t a) (app t' a)
- | ccA_app2 : forall (t:term) (a a':gmargs),
+ | ccA_app2 : forall (t:term) (a a':gmargs), lcT t ->
      ccRAA R a a' -> ccRAT R (app t a) (app t a')
-with ccRAA (R : gmargs -> gmargs -> Prop) : gmargs -> gmargs -> Prop :=
+with ccRAA (R : gmargs -> gmargs -> Prop) : gmargs -> gmargs -> Prop :=     (* in gmargs *)
  | ccA_base : forall (a a':gmargs),
-     lc_gmargs a ->
-     lc_gmargs a' ->  (* Probably not needed, since it follows from the other two. *)
-     R a a' -> ccRAA R a a'       
- | ccA_args1 : forall (u u':term) (l:alist) (c:cont),
+     R a a' -> ccRAA R a a'   (* here we are assuming that (R t t') -> lcT t /\ lcT t', 
+                                which has to be proved for the other rules *)
+ (* the alternative definition is      
+ | ccA_base : forall (a a':gmargs), lcA a -> lcA a' -> R a a' -> ccRAA R a a'    *)
+ | ccA_args1 : forall (u u':term) (l:alist) (c:cont), lcL l -> lcC c ->
      ccRAT R u u' -> ccRAA R (args u l c) (args u' l c)
- | ccA_args2 : forall (u:term) (l l':alist) (c:cont),
+ | ccA_args2 : forall (u:term) (l l':alist) (c:cont), lcT u -> lcC c ->
      ccRAL R l l' -> ccRAA R (args u l c) (args u l' c)
- | ccA_args3 : forall (u:term) (l:alist) (c c':cont),
+ | ccA_args3 : forall (u:term) (l:alist) (c c':cont), lcT u -> lcL l ->
      ccRAC R c c' -> ccRAA R (args u l c) (args u l c')
-with ccRAL (R : gmargs -> gmargs -> Prop) : alist -> alist -> Prop :=
- | ccA_head : forall (u u':term) (l:alist) ,
+with ccRAL (R : gmargs -> gmargs -> Prop) : alist -> alist -> Prop :=        (* in alist *)
+ | ccA_head : forall (u u':term) (l:alist), lcL l ->
      ccRAT R u u' -> ccRAL R (acons u l) (acons u' l)
- | ccA_tail : forall (u :term) (l l':alist) ,
+ | ccA_tail : forall (u :term) (l l':alist), lcT u ->
      ccRAL R l l' -> ccRAL R (acons u l) (acons u l')
-with ccRAC (R : gmargs -> gmargs -> Prop) : cont -> cont -> Prop :=
- | ccA_cabs : forall (v v':term),
-     ccRAT R v v' -> ccRAC R (cabs v) (cabs v').
+with ccRAC (R : gmargs -> gmargs -> Prop) : cont -> cont -> Prop :=          (* in cont *)
+ | ccA_cabs : forall (v v':term) (L:vars),
+     (forall (x:var), x `notin` L -> ccRAT R (v^x) (v'^x) )
+     -> ccRAC R (cabs v) (cabs v').
 
 Scheme ccRAT_ind_4 := Induction for ccRAT Sort Prop
   with ccRAA_ind_4 := Induction for ccRAA Sort Prop
@@ -690,36 +721,42 @@ Combined Scheme ccRA_mutind from
 
 
 (* Compatible closure of RT and RA *)
-Inductive ccRTRAT (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : term -> term -> Prop :=
+Inductive ccRTRAT (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : term -> term -> Prop :=   (* in terms *)
+ | ccTA_baseT : forall (t t':term),   
+     RT t t' -> ccRTRAT RT RA t t'  (* here we are assuming that (RT t t') -> lcT t /\ lcT t', 
+                                      which has to be proved for the other rules *)
+(* the alternative definition is      
  | ccTA_baseT : forall (t t':term),
-     lc_term t ->
-     lc_term t' ->                              (* ????? *)
-     RT t t' -> ccRTRAT RT RA t t'
- | ccTA_abs : forall (t t':term),
-     ccRTRAT RT RA t t' -> ccRTRAT RT RA (abs t) (abs t')
- | ccTA_app1 : forall (t t':term) (a:gmargs),
+     lcT t -> lcT t' ->  RT t t' -> ccRTRAT RT RA t t' *)
+ | ccTA_abs :forall (t t':term) (L:vars),
+     (forall (x:var), x `notin` L -> ccRTRAT RT RA (t^x) (t'^x)) ->
+     ccRTRAT RT RA (abs t) (abs t')
+ | ccTA_app1 : forall (t t':term) (a:gmargs), lcA a ->
      ccRTRAT RT RA t t' -> ccRTRAT RT RA (app t a) (app t' a)
- | ccTA_app2 : forall (t:term) (a a':gmargs),
+ | ccTA_app2 : forall (t:term) (a a':gmargs), lcT t ->
      ccRTRAA RT RA a a' -> ccRTRAT RT RA (app t a) (app t a')
-with ccRTRAA (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : gmargs -> gmargs -> Prop :=
+with ccRTRAA (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : gmargs -> gmargs -> Prop :=    (* in gmargs *)
+       
  | ccTA_baseA : forall (a a':gmargs),
-     lc_gmargs a ->
-     lc_gmargs a' ->                               (* ????? *)
-     RA a a' -> ccRTRAA RT RA a a'              
- | ccTA_args1 : forall (u u':term) (l:alist) (c:cont),
+     RA a a' -> ccRTRAA RT RA a a' (* here we are assuming that (RA a a') -> lcA a /\ lcA a', 
+                                which has to be proved for the other rules *)
+ (* the alternative definition is      
+ | ccTA_baseA : forall (a a':gmargs), lcA a -> lcA a' -> RA a a' -> ccRTRAA RT RA a a'   *)
+ | ccTA_args1 : forall (u u':term) (l:alist) (c:cont), lcL l -> lcC c ->
      ccRTRAT RT RA u u' -> ccRTRAA RT RA (args u l c) (args u' l c)
- | ccTA_args2 : forall (u:term) (l l':alist) (c:cont),
+ | ccTA_args2 : forall (u:term) (l l':alist) (c:cont), lcT u -> lcC c ->
      ccRTRAL RT RA l l' -> ccRTRAA RT RA (args u l c) (args u l' c)
- | ccTA_args3 : forall (u:term) (l:alist) (c c':cont),
+ | ccTA_args3 : forall (u:term) (l:alist) (c c':cont), lcT u -> lcL l ->
      ccRTRAC RT RA c c' -> ccRTRAA RT RA (args u l c) (args u l c')
-with ccRTRAL (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : alist -> alist -> Prop :=
- | ccTA_head : forall (u u':term) (l:alist) ,
+with ccRTRAL (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : alist -> alist -> Prop :=     (* in alist *)
+ | ccTA_head : forall (u u':term) (l:alist), lcL l ->
      ccRTRAT RT RA u u' -> ccRTRAL RT RA (acons u l) (acons u' l)
- | ccTA_tail : forall (u :term) (l l':alist) ,
+ | ccTA_tail : forall (u :term) (l l':alist), lcT u ->
      ccRTRAL RT RA l l' -> ccRTRAL RT RA (acons u l) (acons u l')
-with ccRTRAC (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : cont -> cont -> Prop :=
- | ccTA_cabs : forall (v v':term),
-     ccRTRAT RT RA  v v' -> ccRTRAC RT RA (cabs v) (cabs v').
+with ccRTRAC (RT:term->term->Prop) (RA:gmargs->gmargs->Prop) : cont -> cont -> Prop :=        (* in cont *)
+ | ccTA_cabs : forall (v v':term) (L:vars),
+     (forall (x:var), x `notin` L -> ccRTRAT RT RA (v^x) (v'^x)) ->
+     ccRTRAC RT RA (cabs v) (cabs v').
 
 
 Scheme ccRTRAT_ind_4 := Induction for ccRTRAT Sort Prop

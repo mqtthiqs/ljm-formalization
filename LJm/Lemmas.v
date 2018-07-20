@@ -600,7 +600,8 @@ Proof.
       * assumption.
       * 
 *)
-(*----- alternativa -----*)           
+    (*----- alternativa -----*)
+    (*
     + simpl. unfold pi_refcompCT. constructor.
       * inversion_clear H1. lc_tac.
       * inversion_clear H1. lc_tac.
@@ -664,6 +665,8 @@ Proof.
         -- apply lcT_lcA_openA; [constructor|assumption].
       * admit. (* apply pi_lc. *)
     + constructor. admit. (* apply H. *)
+
+*)
 Admitted.
 
       
